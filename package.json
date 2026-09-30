@@ -1,0 +1,40 @@
+{
+  "name": "ryze",
+  "version": "2.0.0",
+  "description": "Discord bot for temporary voice channels, anti-spam and an admin Activity.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+    "dev:web": "vite --config web/vite.config.ts",
+    "build": "npm run build:server && npm run build:web",
+    "build:server": "tsc -p tsconfig.json",
+    "build:web": "vite build --config web/vite.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.28.1",
+    "express": "^5.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@discord/embedded-app-sdk": "^2.5.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "lucide-react": "^1.72.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8"
+  }
+}
