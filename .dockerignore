@@ -1,0 +1,8 @@
+node_modules
+dist
+appdata
+.env
+.git
+*.log
+voice.db
+README.md

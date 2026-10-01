@@ -1,0 +1,17 @@
+services:
+  ryze:
+    build: .
+    image: ryze:latest
+    container_name: ryze
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATA_DIR: /appdata
+      PORT: 3000
+    ports:
+      # Activity web app + API. Put it behind HTTPS (Nginx Proxy Manager,
+      # Cloudflare Tunnel, ...). See README.
+      - "${RYZE_PORT:-3000}:3000"
+    volumes:
+      # Database and persistent data. Drop the old voice.db in here to import it.
+      - ./appdata:/appdata
