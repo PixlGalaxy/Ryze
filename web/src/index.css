@@ -1,0 +1,35 @@
+@import 'tailwindcss';
+
+/* Discord-like dark palette */
+@theme {
+  --color-bg: #1e1f22;
+  --color-surface: #2b2d31;
+  --color-surface-2: #313338;
+  --color-surface-3: #383a40;
+  --color-line: #3f4147;
+  --color-fg: #f2f3f5;
+  --color-muted: #b5bac1;
+  --color-accent: #ff7b00;
+  --color-accent-hover: #ff9533;
+  --color-blurple: #5865f2;
+  --color-danger: #da373c;
+  --color-warn: #f0b232;
+  --color-ok: #23a55a;
+  --font-sans: 'gg sans', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  color-scheme: dark;
+}
+
+body {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+input[type='number']::-webkit-inner-spin-button {
+  opacity: 0.4;
+}
