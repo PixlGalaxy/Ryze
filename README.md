@@ -64,9 +64,12 @@ En <https://discord.com/developers/applications> → tu aplicación:
 
 ```bash
 cp .env.example .env      # y rellena DISCORD_TOKEN, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET
-docker compose up -d --build
+docker compose pull       # imagen publicada: ghcr.io/pixlgalaxy/ryze:latest
+docker compose up -d      # o `docker compose up -d --build` para compilarla localmente
 docker compose logs -f
 ```
+
+La imagen se publica sola con GitHub Actions ([docker-build.yml](.github/workflows/docker-build.yml)) en cada push a `main` (`latest`, la versión de `package.json` y el SHA). Dependabot mantiene al día npm, la imagen base y las Actions; los PRs minor/patch se fusionan solos cuando el build pasa y los major esperan revisión.
 
 - El contenedor expone el puerto **3000** (panel + API). Cámbialo en el host con `RYZE_PORT` en `.env`.
 - **Datos persistentes**: todo se guarda en `/appdata` dentro del contenedor, montado en `./appdata` del host (base de datos `ryze.db`). Haz backup de esa carpeta.

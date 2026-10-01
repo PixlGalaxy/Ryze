@@ -1,7 +1,8 @@
 services:
   ryze:
+    # Published by GitHub Actions. `docker compose up --build` builds it locally instead.
+    image: ghcr.io/pixlgalaxy/ryze:latest
     build: .
-    image: ryze:latest
     container_name: ryze
     restart: unless-stopped
     env_file: .env

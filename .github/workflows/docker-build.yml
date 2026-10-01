@@ -1,0 +1,67 @@
+name: Build and Push Docker Image for Ryze
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  # Keeps the job name "docker": it is the required check Dependabot's auto-merge waits for.
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 🚀 Display Startup Message
+        run: echo "🚀 Hello from Galaxy! | Building Ryze (bot + Activity panel) with Node 24..."
+
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v7
+
+      # In the same Node as the image, so a type error fails here before anything is pushed.
+      - name: 🧪 Typecheck
+        run: docker run --rm -v "$PWD:/app" -w /app node:24-alpine sh -c "npm ci --no-audit --no-fund && npm run typecheck"
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: 🔍 Prepare Repository Owner and Tags
+        id: vars
+        run: |
+          echo "REPOSITORY_OWNER=$(echo $GITHUB_REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "IMAGE_NAME=ryze" >> $GITHUB_ENV
+          echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=$(echo ${GITHUB_REF_NAME} | tr '[:upper:]' '[:lower:]' | tr '/' '-')" >> $GITHUB_ENV
+          fi
+
+      - name: 🔑 Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗 Build and Push Docker Image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          # Pull requests (Dependabot included) only validate the build
+          push: ${{ github.event_name != 'pull_request' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ghcr.io/${{ env.REPOSITORY_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ghcr.io/${{ env.REPOSITORY_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_TAG == 'latest' && format('ghcr.io/{0}/{1}:{2}', env.REPOSITORY_OWNER, env.IMAGE_NAME, env.APP_VERSION) || '' }}

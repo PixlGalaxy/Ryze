@@ -1,0 +1,38 @@
+version: 2
+# Minor/patch bumps are grouped into one PR per area and merged automatically
+# by dependabot-auto-merge.yml once the build passes. Every major bump gets its
+# own PR and waits for a manual review.
+updates:
+  # Bot (discord.js, express, zod) and Activity panel (React, Vite, Tailwind) share one package.json.
+  - package-ecosystem: "npm"
+    directory: "/"
+    open-pull-requests-limit: 15
+    schedule:
+      interval: "daily"
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    open-pull-requests-limit: 5
+    schedule:
+      interval: "weekly"
+    groups:
+      docker-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    open-pull-requests-limit: 5
+    schedule:
+      interval: "weekly"
+    groups:
+      actions-deps:
+        patterns:
+          - "*"
