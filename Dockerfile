@@ -1,5 +1,5 @@
 # ---------- build: compile the bot (TypeScript) and the Activity web app (Vite)
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
@@ -9,7 +9,7 @@ COPY web ./web
 RUN npm run build && npm prune --omit=dev
 
 # ---------- runtime
-FROM node:24-alpine
+FROM node:26-alpine
 RUN apk add --no-cache su-exec
 ENV NODE_ENV=production \
     DATA_DIR=/appdata \
