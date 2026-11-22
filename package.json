@@ -14,7 +14,7 @@
     "build:server": "tsc -p tsconfig.json",
     "build:web": "vite build --config web/vite.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
-    "start": "node dist/index.js"
+    "start": "node --env-file-if-exists=.env dist/index.js"
   },
   "dependencies": {
     "discord.js": "^14.28.1",

@@ -44,5 +44,17 @@ client.on(Events.InteractionCreate, (interaction) => {
 client.on(Events.Error, logError('client'));
 
 export async function startBot(): Promise<void> {
-  await client.login(env.token);
+  try {
+    await client.login(env.token);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('disallowed intents')) {
+      console.error(
+        '[bot] Discord rejected the privileged intents. In the Developer Portal > Bot, enable ' +
+          '"Server Members Intent" and "Message Content Intent", then restart Ryze.',
+      );
+      process.exit(1);
+    }
+    throw error;
+  }
 }
