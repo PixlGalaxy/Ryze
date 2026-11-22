@@ -1,82 +1,82 @@
 # Ryze
 
-Bot de Discord para **canales de voz temporales** ("Join to Create"), con **anti-spam** y un **panel de administración que se abre como Activity** dentro de Discord.
+Discord bot for **temporary voice channels** ("Join to Create"), with **anti-spam** and a **control panel that opens as an Activity** inside Discord.
 
-- **Canales temporales**: entras al canal lobby, Ryze te crea tu propio canal y lo borra cuando queda vacío.
-- **Anti-spam**: detecta el mismo enlace en varios canales (o palabras bloqueadas como estafas de "MrBeast" o "Nitro gratis"), borra los mensajes, aplica timeout y avisa en el canal de alertas mencionando a los admins.
-- **Panel (Activity)** que se abre dentro de Discord:
-  - **Todos los miembros** ven **Mi canal**: cambiar nombre y límite, bloquear o desbloquear, permitir o bloquear personas, expulsar, pasar el canal a otro, reclamar un canal sin dueño y guardar sus preferencias para la próxima vez.
-  - **Dueño y managers** ven además el botón **Configurar Ryze**: canales temporales, anti-spam, quién más puede administrar y el registro de actividad.
+- **Temporary channels**: join the lobby channel and Ryze creates your own voice channel, then deletes it when it's empty.
+- **Anti-spam**: detects the same link posted in several channels (or blocked words such as "MrBeast" or "free Nitro" scams), deletes the messages, times the user out and posts an alert mentioning the admins.
+- **Panel (Activity)** that opens inside Discord:
+  - **Every member** sees **My channel**: rename it, set the user limit, lock or unlock it, permit or block people, kick, hand the channel over, claim an ownerless channel and save their preferences for next time.
+  - **The owner and managers** also get the **Configure Ryze** button: temporary channels, anti-spam, who else can manage Ryze, and the activity log.
 
-Hecho en TypeScript con discord.js v14, Express y SQLite (`node:sqlite`). El panel usa React (TSX), Tailwind CSS v4, lucide-react y Vite.
+Built with TypeScript, discord.js v14, Express and SQLite (`node:sqlite`). The panel uses React (TSX), Tailwind CSS v4, lucide-react and Vite.
 
 ---
 
-## Comandos
+## Commands
 
-| Comando | Quién | Qué hace |
+| Command | Who | What it does |
 | --- | --- | --- |
-| `/voice lock` · `/voice unlock` | Dueño del canal | Bloquea o desbloquea el canal |
-| `/voice permit @usuario` | Dueño del canal | Deja entrar a alguien |
-| `/voice reject @usuario` | Dueño del canal | Lo saca y le quita el acceso |
-| `/voice limit <0-99>` | Dueño del canal | Límite de usuarios |
-| `/voice name <nombre>` | Dueño del canal | Cambia el nombre (se recuerda) |
-| `/voice claim` | Cualquiera en el canal | Se queda con el canal si el dueño se fue |
-| `/voice setup` | Dueño / managers | Crea la categoría y el canal lobby |
-| `/panel` | Todos | Abre el panel (Activity): Mi canal, y Configurar Ryze para admins |
-| `/help` | Todos | Ayuda |
+| `/voice lock` · `/voice unlock` | Channel owner | Locks or unlocks the channel |
+| `/voice permit @user` | Channel owner | Lets someone join |
+| `/voice reject @user` | Channel owner | Kicks them and removes their access |
+| `/voice limit <0-99>` | Channel owner | User limit |
+| `/voice name <name>` | Channel owner | Renames the channel (remembered) |
+| `/voice claim` | Anyone in the channel | Takes over the channel if the owner left |
+| `/voice setup` | Owner / managers | Creates the category and the lobby channel |
+| `/panel` | Everyone | Opens the panel (Activity): My channel, plus Configure Ryze for admins |
+| `/help` | Everyone | Help |
 
-El panel también se abre desde el lanzador de apps (🚀) de Discord → **Ryze**, y desde el botón que trae cada alerta de spam.
+The panel also opens from Discord's app launcher (🚀) → **Ryze**, and from the button on every spam alert.
 
-**Permisos:** cualquier miembro puede abrir el panel y gestionar su propio canal. El dueño del servidor siempre ve **Configurar Ryze**. Desde **Configurar Ryze → Permisos** puede agregar usuarios o roles como *managers*, que pueden configurar todo menos la lista de managers. Si en *Canales de voz* se desactiva la personalización, los miembros pueden seguir bloqueando y permitiendo personas, pero no cambiar el nombre ni el límite.
+**Permissions:** any member can open the panel and manage their own channel. The server owner always sees **Configure Ryze**. From **Configure Ryze → Permissions** the owner can add users or roles as *managers*, who can configure everything except the manager list. If customization is turned off under *Voice channels*, members can still lock and permit people, but can't change the name or the limit.
 
 ---
 
-## 1. Configurar la aplicación en el Developer Portal
+## 1. Set up the application in the Developer Portal
 
-En <https://discord.com/developers/applications> → tu aplicación:
+At <https://discord.com/developers/applications> → your application:
 
 1. **Bot**
-   - Copia el token (`DISCORD_TOKEN`).
-   - En *Privileged Gateway Intents* activa **Server Members Intent** y **Message Content Intent** (el anti-spam necesita leer los enlaces).
-2. **General Information** → copia el *Application ID* (`DISCORD_CLIENT_ID`).
+   - Copy the token (`DISCORD_TOKEN`).
+   - Under *Privileged Gateway Intents* enable **Server Members Intent** and **Message Content Intent** (the anti-spam needs to read links). Without them the bot can't log in (`Used disallowed intents`). Presence Intent is not needed.
+2. **General Information** → copy the *Application ID* (`DISCORD_CLIENT_ID`).
 3. **OAuth2**
-   - Copia el *Client Secret* (`DISCORD_CLIENT_SECRET`).
-   - En *Redirects* agrega **exactamente una** URL, `https://127.0.0.1`, y pulsa **Save Changes**. Es obligatoria: sin ella el login de la Activity falla con `Missing "redirect_uri" in request`. No es lo mismo que el URL Mapping.
-4. **Activities → Settings** → activa **Enable Activities**. Elige que se pueda lanzar en servidores.
-5. **Activities → URL Mappings** → agrega:
+   - Copy the *Client Secret* (`DISCORD_CLIENT_SECRET`).
+   - Under *Redirects* add **exactly one** URL, `https://127.0.0.1`, and press **Save Changes**. It's required: without it the Activity login fails with `Missing "redirect_uri" in request`. It is not the same as the URL Mapping.
+4. **Activities → Settings** → turn on **Enable Activities**, allow launching in servers and tick the **Supported Platforms** (at least Desktop).
+5. **Activities → URL Mappings** → add:
 
    | Prefix | Target |
    | --- | --- |
-   | `/` | `ryze.tudominio.com` (tu dominio público, **sin** `https://`) |
+   | `/` | `ryze.yourdomain.com` (your public domain, **without** `https://`) |
 
-6. **Invitar el bot** con estos permisos (Gestionar canales, Gestionar roles, Mover miembros, Aislar temporalmente, Gestionar mensajes, Enviar mensajes, Ver canales, Conectar, Insertar enlaces, Leer historial):
+6. **Invite the bot** with these permissions (Manage Channels, Manage Roles, Move Members, Timeout Members, Manage Messages, Send Messages, View Channels, Connect, Embed Links, Read Message History):
 
    ```
-   https://discord.com/oauth2/authorize?client_id=TU_CLIENT_ID&permissions=1099797982224&scope=bot+applications.commands
+   https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=1099797982224&integration_type=0&scope=bot+applications.commands
    ```
 
-   > El rol de Ryze debe estar **por encima** de los roles de los usuarios a los que tiene que aplicar timeout. Los administradores no pueden recibir timeout.
+   > Ryze's role must be **above** the roles of the users it has to time out. Administrators can't be timed out.
 
 ---
 
-## 2. Ejecutar con Docker
+## 2. Run with Docker
 
 ```bash
-cp .env.example .env      # y rellena DISCORD_TOKEN, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET
-docker compose pull       # imagen publicada: ghcr.io/pixlgalaxy/ryze:latest
-docker compose up -d      # o `docker compose up -d --build` para compilarla localmente
+cp .env.example .env      # and fill in DISCORD_TOKEN, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET
+docker compose pull       # published image: ghcr.io/pixlgalaxy/ryze:latest
+docker compose up -d      # or `docker compose up -d --build` to build it locally
 docker compose logs -f
 ```
 
-La imagen se publica sola con GitHub Actions ([docker-build.yml](.github/workflows/docker-build.yml)) en cada push a `main` (`latest`, la versión de `package.json` y el SHA). Dependabot mantiene al día npm, la imagen base y las Actions; los PRs minor/patch se fusionan solos cuando el build pasa y los major esperan revisión.
+GitHub Actions ([docker-build.yml](.github/workflows/docker-build.yml)) publishes the image on every push to `main` (`latest`, the `package.json` version and the commit SHA). Dependabot keeps npm, the base image and the Actions up to date; minor/patch PRs merge themselves once the build passes, majors wait for review.
 
-- El contenedor expone el puerto **3000** (panel + API). Cámbialo en el host con `RYZE_PORT` en `.env`.
-- **Datos persistentes**: todo se guarda en `/appdata` dentro del contenedor, montado en `./appdata` del host (base de datos `ryze.db`). Haz backup de esa carpeta.
-- **Migración del bot antiguo**: si pones el `voice.db` del bot de Python en `./appdata/voice.db`, la primera vez que arranca se importa la configuración (canal lobby, categoría y límite por servidor).
+- The container exposes port **3000** (panel + API). Change the host port with `RYZE_PORT` in `.env`.
+- **Persistent data**: everything is stored in `/appdata` inside the container, mounted at `./appdata` on the host (database `ryze.db`). Back up that folder.
+- **Migrating from the old bot**: put the Python bot's `voice.db` at `./appdata/voice.db` and its configuration (lobby channel, category and limit per server) is imported on the first start.
 - Healthcheck: `GET /api/health`.
 
-Sin compose:
+Without compose:
 
 ```bash
 docker build -t ryze .
@@ -86,23 +86,23 @@ docker run -d --name ryze --restart unless-stopped --env-file .env \
 
 ---
 
-## 3. Publicar el panel con HTTPS
+## 3. Publish the panel over HTTPS
 
-Discord solo carga Activities desde una URL **HTTPS pública**. Ryze sirve HTTP en el puerto 3000; pon delante un proxy con certificado. Después, usa ese dominio en *URL Mappings* (paso 1.5).
+Discord only loads Activities from a **public HTTPS** URL: it fetches the panel through its own proxy, so it can't reach `localhost`. Ryze serves HTTP on port 3000; put a proxy with a certificate in front of it, then use that domain in *URL Mappings* (step 1.5).
 
-### Opción A: Nginx Proxy Manager
+### Option A: Nginx Proxy Manager
 
-1. En NPM → **Hosts → Proxy Hosts → Add Proxy Host**.
+1. In NPM → **Hosts → Proxy Hosts → Add Proxy Host**.
 2. *Details*:
-   - **Domain Names**: `ryze.tudominio.com` (con un registro DNS A/CNAME apuntando a tu servidor).
+   - **Domain Names**: `ryze.yourdomain.com` (with a DNS A/CNAME record pointing to your server).
    - **Scheme**: `http`
-   - **Forward Hostname / IP**: la IP del servidor donde corre Ryze, o `ryze` si NPM está en la misma red de Docker que el contenedor.
-   - **Forward Port**: `3000` (o el `RYZE_PORT` que hayas puesto).
-   - Activa **Block Common Exploits**.
-3. *SSL*: **Request a new SSL Certificate** (Let's Encrypt), activa **Force SSL** y **HTTP/2 Support**.
-4. Guarda y comprueba que `https://ryze.tudominio.com/api/health` responde `{"ok":true,...}`.
+   - **Forward Hostname / IP**: the IP of the server running Ryze, or `ryze` if NPM is on the same Docker network as the container.
+   - **Forward Port**: `3000` (or the `RYZE_PORT` you set).
+   - Enable **Block Common Exploits**.
+3. *SSL*: **Request a new SSL Certificate** (Let's Encrypt), enable **Force SSL** and **HTTP/2 Support**.
+4. Save and check that `https://ryze.yourdomain.com/api/health` returns `{"ok":true,...}`.
 
-Si NPM y Ryze comparten red de Docker, puedes quitar `ports:` del compose y unirlos así:
+If NPM and Ryze share a Docker network, you can drop `ports:` from the compose file and join them like this:
 
 ```yaml
 services:
@@ -111,15 +111,15 @@ services:
     networks: [npm]
 networks:
   npm:
-    external: true   # el nombre de la red de tu Nginx Proxy Manager
+    external: true   # the name of your Nginx Proxy Manager network
 ```
 
-### Opción B: Cloudflare Tunnel
+### Option B: Cloudflare Tunnel
 
-No necesitas abrir puertos ni tener IP pública.
+No open ports or public IP needed.
 
-1. En Cloudflare Zero Trust → **Networks → Tunnels → Create a tunnel** (tipo *Cloudflared*). Copia el token.
-2. Añade el conector a tu `docker-compose.yml`:
+1. In Cloudflare Zero Trust → **Networks → Tunnels → Create a tunnel** (type *Cloudflared*). Copy the token.
+2. Add the connector to your `docker-compose.yml`:
 
    ```yaml
    services:
@@ -134,98 +134,98 @@ No necesitas abrir puertos ni tener IP pública.
        depends_on: [ryze]
    ```
 
-   y `CLOUDFLARE_TUNNEL_TOKEN=...` en `.env`.
-3. En el túnel → **Public Hostname → Add**:
-   - **Subdomain/Domain**: `ryze.tudominio.com`
-   - **Service**: `HTTP` → `ryze:3000` (si cloudflared corre en el mismo compose) o `localhost:3000` (si corre en el host).
-4. Comprueba `https://ryze.tudominio.com/api/health`.
+   and `CLOUDFLARE_TUNNEL_TOKEN=...` in `.env`.
+3. In the tunnel → **Public Hostname → Add**:
+   - **Subdomain/Domain**: `ryze.yourdomain.com`
+   - **Service**: `HTTP` → `ryze:3000` (if cloudflared runs in the same compose) or `localhost:3000` (if it runs on the host).
+4. Check `https://ryze.yourdomain.com/api/health`.
 
-Para probar rápido sin dominio: `cloudflared tunnel --url http://localhost:3000` te da una URL `*.trycloudflare.com` temporal (cambia cada vez, hay que actualizar el URL Mapping).
+For a quick test without a domain: `cloudflared tunnel --url http://localhost:3000` gives you a temporary `*.trycloudflare.com` URL (it changes every run, so update the URL Mapping each time).
 
 ---
 
-## Desarrollo local
+## Local development
 
-Requiere Node.js 22.13 o superior (recomendado 24).
+Requires Node.js 22.13 or newer (24+ recommended).
 
 ```bash
 npm install
-cp .env.example .env     # pon DEV_GUILD_ID para que los comandos se registren al instante en tu servidor
-npm run build:web        # compila el panel una vez (o usa `npm run dev:web` con un túnel al puerto 5173)
-npm run dev              # bot + API con recarga automática
+cp .env.example .env     # set DEV_GUILD_ID so commands register instantly in your server
+npm run build:web        # build the panel once (or use `npm run dev:web` with a tunnel to port 5173)
+npm run dev              # bot + API with auto-reload
 ```
 
-O sin Docker en modo producción: `npm run build` y `npm start` (ambos leen el `.env`).
+Or without Docker in production mode: `npm run build` and `npm start` (both read `.env`).
 
-### Ver el panel en local (sin túnel)
+### Preview the panel locally (no tunnel)
 
-Discord de escritorio puede cargar la Activity desde tu PC con el **Application URL Override**, pero **solo por HTTPS**. Con `http://localhost` se queda en blanco.
+Discord desktop can load the Activity from your PC with the **Application URL Override**, but **only over HTTPS**. With `http://localhost` it stays blank.
 
-1. Crea un certificado de confianza para `localhost`:
+1. Create a trusted certificate for `localhost`:
    ```powershell
-   winget install FiloSottile.mkcert   # luego abre una terminal nueva
+   winget install FiloSottile.mkcert   # then open a new terminal
    mkcert -install
    mkdir certs
    mkcert -cert-file certs/localhost.pem -key-file certs/localhost-key.pem localhost 127.0.0.1
    ```
-2. En `.env`:
+2. In `.env`:
    ```env
    HTTPS_CERT_FILE=./certs/localhost.pem
    HTTPS_KEY_FILE=./certs/localhost-key.pem
    ```
 3. `npm start` → `listening on https://localhost:3000`.
-4. Discord → Ajustes → Avanzado → **Modo desarrollador** y **Application URL Override** = `https://localhost:3000`. Cierra Discord por completo y ábrelo.
-5. Abre la Activity (`/panel` o 🚀). Para depurar, `LOG_REQUESTS=1` muestra cada petición en la consola.
+4. Discord → User Settings → Advanced → **Developer Mode** and **Application URL Override** = `https://localhost:3000`. Fully quit Discord and reopen it.
+5. Open the Activity (`/panel` or 🚀). To debug, `LOG_REQUESTS=1` prints every request to the console.
 
-Quita el override cuando uses el túnel o tu dominio: si está puesto, Discord siempre usa el override.
+Remove the override when you use the tunnel or your domain: while it's set, Discord always uses the override.
 
-| Script | Descripción |
+| Script | Description |
 | --- | --- |
-| `npm run dev` | Bot + servidor web con recarga (tsx) |
-| `npm run dev:web` | Vite dev server del panel en :5173 (redirige `/api` a :3000) |
-| `npm run build` | Compila bot (`dist/`) y panel (`dist/public/`) |
-| `npm run typecheck` | Revisa tipos del bot y del panel |
-| `npm start` | Ejecuta la versión compilada |
+| `npm run dev` | Bot + web server with auto-reload (tsx) |
+| `npm run dev:web` | Vite dev server for the panel on :5173 (proxies `/api` to :3000) |
+| `npm run build` | Builds the bot (`dist/`) and the panel (`dist/public/`) |
+| `npm run typecheck` | Type-checks the bot and the panel |
+| `npm start` | Runs the built version |
 
-### Estructura
+### Project structure
 
 ```
 src/
-  index.ts            arranque: migración, servidor web y bot
-  config.ts           variables de entorno
-  db.ts               SQLite: ajustes, canales temporales, registro de actividad
-  settings.ts         esquemas (zod) de la configuración por servidor
-  permissions.ts      dueño / managers / exentos del anti-spam
+  index.ts            startup: migration, web server and bot
+  config.ts           environment variables
+  db.ts               SQLite: settings, temporary channels, activity log
+  settings.ts         per-server settings schemas (zod)
+  permissions.ts      owner / managers / anti-spam exemptions
   bot/
-    client.ts         cliente de discord.js y eventos
-    commands.ts       slash commands y botón "Abrir panel"
+    client.ts         discord.js client and events
+    commands.ts       slash commands and the "Open panel" button
     tempChannels.ts   Join to Create
-    antispam.ts       detección de spam, timeout y alertas
-    alerts.ts         canal de alertas y menciones
-    voiceActions.ts   acciones sobre un canal (lock, permit, rename…), compartidas por /voice y el panel
+    antispam.ts       spam detection, timeout and alerts
+    alerts.ts         alert channel and mentions
+    voiceActions.ts   channel actions (lock, permit, rename…) shared by /voice and the panel
   web/
-    server.ts         API de admin + archivos estáticos + proxy de avatares
-    member.ts         API de "Mi canal" (/api/me) para cualquier miembro
-    auth.ts           login OAuth2 de la Activity, sesiones y requireAdmin
+    server.ts         admin API + static files + avatar proxy
+    member.ts         "My channel" API (/api/me) for any member
+    auth.ts           Activity OAuth2 login, sessions and requireAdmin
 web/src/              panel: React + TSX + Tailwind + lucide-react
-  App.tsx             arranque (Embedded App SDK) y cambio Mi canal ↔ Configurar Ryze
-  views/MyChannel.tsx vista de miembro
-  views/admin/        pestañas de configuración
-  components/ui.tsx   componentes reutilizables
-docker/entrypoint.sh  ajusta permisos de /appdata y baja a usuario sin privilegios
+  App.tsx             startup (Embedded App SDK) and My channel ↔ Configure Ryze switch
+  views/MyChannel.tsx member view
+  views/admin/        configuration tabs
+  components/ui.tsx   shared components
+docker/entrypoint.sh  fixes /appdata ownership and drops to an unprivileged user
 ```
 
-### Variables de entorno
+### Environment variables
 
-| Variable | Obligatoria | Por defecto | Descripción |
+| Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `DISCORD_TOKEN` | Sí | | Token del bot |
-| `DISCORD_CLIENT_ID` | Sí | | Application ID |
-| `DISCORD_CLIENT_SECRET` | Sí | | Client Secret de OAuth2 |
-| `DATA_DIR` | No | `./appdata` (`/appdata` en Docker) | Carpeta de datos persistentes |
-| `PORT` | No | `3000` | Puerto HTTP del panel |
-| `DEV_GUILD_ID` | No | | Registra los comandos solo en ese servidor |
-| `PRESENCE_TEXT` | No | `/help · /voice` | Estado del bot |
-| `EVENT_RETENTION_DAYS` | No | `90` | Días que se guarda el registro de actividad |
-| `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE` | No | | Sirve el panel por HTTPS (solo para probar en local con el URL override) |
-| `LOG_REQUESTS` | No | | `1` = muestra cada petición HTTP en la consola |
+| `DISCORD_TOKEN` | Yes | | Bot token |
+| `DISCORD_CLIENT_ID` | Yes | | Application ID |
+| `DISCORD_CLIENT_SECRET` | Yes | | OAuth2 Client Secret |
+| `DATA_DIR` | No | `./appdata` (`/appdata` in Docker) | Persistent data folder |
+| `PORT` | No | `3000` | HTTP port of the panel |
+| `DEV_GUILD_ID` | No | | Registers commands only in that server |
+| `PRESENCE_TEXT` | No | `/help · /voice` | Bot status text |
+| `EVENT_RETENTION_DAYS` | No | `90` | Days the activity log is kept |
+| `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE` | No | | Serve the panel over HTTPS (local testing with the URL override only) |
+| `LOG_REQUESTS` | No | | `1` = print every HTTP request to the console |
