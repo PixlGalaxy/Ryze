@@ -25,32 +25,32 @@ import { errorMessage, timeAgo } from '../../lib/format';
 import type { AdminProps } from './AdminPanel';
 
 const FILTERS = [
-  { id: '', label: 'Todo' },
+  { id: '', label: 'All' },
   { id: 'spam', label: 'Spam' },
-  { id: 'voice', label: 'Canales' },
-  { id: 'config', label: 'Configuración' },
+  { id: 'voice', label: 'Channels' },
+  { id: 'config', label: 'Settings' },
 ] as const;
 
 const SETTING_LABELS: Record<string, string> = {
-  lobbyChannelId: 'canal lobby',
-  categoryId: 'categoría',
-  nameTemplate: 'nombre por defecto',
-  defaultLimit: 'límite',
+  lobbyChannelId: 'lobby channel',
+  categoryId: 'category',
+  nameTemplate: 'default name',
+  defaultLimit: 'limit',
   bitrateKbps: 'bitrate',
-  lockedByDefault: 'bloqueo por defecto',
-  allowUserCustomization: 'personalización',
+  lockedByDefault: 'locked by default',
+  allowUserCustomization: 'customization',
   cooldownSeconds: 'cooldown',
-  enabled: 'activado',
-  channelThreshold: 'canales distintos',
-  windowSeconds: 'ventana',
-  linksOnly: 'solo enlaces',
-  blockedPatterns: 'palabras bloqueadas',
-  blockedPatternsRequireLink: 'requiere enlace',
-  timeoutMinutes: 'duración del timeout',
-  deleteMessages: 'borrar mensajes',
-  alertChannelId: 'canal de alertas',
-  pingAdmins: 'mencionar admins',
-  exemptRoleIds: 'roles exentos',
+  enabled: 'enabled',
+  channelThreshold: 'channel threshold',
+  windowSeconds: 'time window',
+  linksOnly: 'links only',
+  blockedPatterns: 'blocked words',
+  blockedPatternsRequireLink: 'requires link',
+  timeoutMinutes: 'timeout length',
+  deleteMessages: 'delete messages',
+  alertChannelId: 'alert channel',
+  pingAdmins: 'ping admins',
+  exemptRoleIds: 'exempt roles',
 };
 
 type Tone = 'danger' | 'warn' | undefined;
@@ -102,48 +102,48 @@ export function ActivityLog({ data }: AdminProps) {
   const name = (id: string | null | undefined) => (id ? (users[id]?.name ?? `@${id}`) : 'Ryze');
   const channelName = (id: unknown) => {
     const c = data.channels.find((x) => x.id === id);
-    return c ? `#${c.name}` : 'canal borrado';
+    return c ? `#${c.name}` : 'deleted channel';
   };
 
   function describe(e: ActivityEvent): { icon: LucideIcon; text: string; tone?: Tone } {
     const d = e.data;
     switch (e.type) {
       case 'spam.timeout':
-        return { icon: VolumeX, tone: 'danger', text: `${name(e.targetId)} recibió timeout de ${d.timeoutMinutes} min por spam` };
+        return { icon: VolumeX, tone: 'danger', text: `${name(e.targetId)} got a ${d.timeoutMinutes} min timeout for spam` };
       case 'spam.timeout_failed':
-        return { icon: TriangleAlert, tone: 'warn', text: `Spam de ${name(e.targetId)} detectado, pero no se pudo aplicar el timeout` };
+        return { icon: TriangleAlert, tone: 'warn', text: `Spam from ${name(e.targetId)} detected, but the timeout could not be applied` };
       case 'spam.untimeout':
-        return { icon: CircleCheck, text: `${name(e.actorId)} quitó el timeout a ${name(e.targetId)}` };
+        return { icon: CircleCheck, text: `${name(e.actorId)} removed the timeout from ${name(e.targetId)}` };
       case 'voice.created':
-        return { icon: Plus, text: `${name(e.actorId)} creó "${d.name}"` };
+        return { icon: Plus, text: `${name(e.actorId)} created "${d.name}"` };
       case 'voice.deleted':
-        return { icon: Trash2, text: d.byAdmin ? `${name(e.actorId)} borró "${d.name}" desde el panel` : `Se borró "${d.name}" (vacío)` };
+        return { icon: Trash2, text: d.byAdmin ? `${name(e.actorId)} deleted "${d.name}" from the panel` : `"${d.name}" was deleted (empty)` };
       case 'voice.claimed':
         return {
           icon: Crown,
-          text: d.transfer ? `${name(String(d.previousOwner))} le pasó su canal a ${name(e.actorId)}` : `${name(e.actorId)} reclamó el canal de ${name(String(d.previousOwner))}`,
+          text: d.transfer ? `${name(String(d.previousOwner))} handed their channel to ${name(e.actorId)}` : `${name(e.actorId)} claimed ${name(String(d.previousOwner))}'s channel`,
         };
       case 'voice.locked':
-        return { icon: Lock, text: `${name(e.actorId)} bloqueó su canal` };
+        return { icon: Lock, text: `${name(e.actorId)} locked their channel` };
       case 'voice.unlocked':
-        return { icon: LockOpen, text: `${name(e.actorId)} desbloqueó su canal` };
+        return { icon: LockOpen, text: `${name(e.actorId)} unlocked their channel` };
       case 'voice.permit':
-        return { icon: UserCheck, text: `${name(e.actorId)} permitió a ${name(e.targetId)}` };
+        return { icon: UserCheck, text: `${name(e.actorId)} permitted ${name(e.targetId)}` };
       case 'voice.reject':
-        return { icon: Ban, text: `${name(e.actorId)} bloqueó a ${name(e.targetId)} de su canal` };
+        return { icon: Ban, text: `${name(e.actorId)} blocked ${name(e.targetId)} from their channel` };
       case 'voice.rename':
-        return { icon: Pencil, text: `${name(e.actorId)} renombró su canal a "${d.name}"` };
+        return { icon: Pencil, text: `${name(e.actorId)} renamed their channel to "${d.name}"` };
       case 'voice.limit':
-        return { icon: Users, text: `${name(e.actorId)} puso límite ${d.limit || 'ilimitado'}` };
+        return { icon: Users, text: `${name(e.actorId)} set the limit to ${d.limit || 'unlimited'}` };
       case 'setup':
-        return { icon: Wrench, text: `${name(e.actorId)} ejecutó /voice setup` };
+        return { icon: Wrench, text: `${name(e.actorId)} ran /voice setup` };
       case 'config.voice':
       case 'config.antispam': {
         const changed = (Array.isArray(d.changed) ? d.changed : []).map((k) => SETTING_LABELS[String(k)] ?? String(k)).join(', ');
-        return { icon: Settings, text: `${name(e.actorId)} cambió ${e.type === 'config.voice' ? 'voz' : 'anti-spam'}: ${changed}` };
+        return { icon: Settings, text: `${name(e.actorId)} changed ${e.type === 'config.voice' ? 'voice' : 'anti-spam'}: ${changed}` };
       }
       case 'config.managers':
-        return { icon: Users, text: `${name(e.actorId)} actualizó los managers` };
+        return { icon: Users, text: `${name(e.actorId)} updated the managers` };
       default:
         return { icon: Volume2, text: e.type };
     }
@@ -151,7 +151,7 @@ export function ActivityLog({ data }: AdminProps) {
 
   return (
     <Card
-      title="Actividad"
+      title="Activity"
       icon={History}
       actions={
         <div className="flex flex-wrap gap-0.5 rounded-lg bg-bg p-[3px]">
@@ -188,7 +188,7 @@ export function ActivityLog({ data }: AdminProps) {
                 <Icon className={cx('size-4 shrink-0', tone === 'danger' ? 'text-red-400' : tone === 'warn' ? 'text-warn' : 'text-muted')} />
                 {subject && <Avatar src={users[subject]?.avatar} size={22} />}
                 <span className="min-w-0 flex-1">{text}</span>
-                <span className="shrink-0 whitespace-nowrap text-xs text-muted" title={new Date(e.createdAt).toLocaleString('es')}>
+                <span className="shrink-0 whitespace-nowrap text-xs text-muted" title={new Date(e.createdAt).toLocaleString('en')}>
                   {timeAgo(e.createdAt)}
                 </span>
                 {isSpam && <ChevronRight className={cx('size-4 shrink-0 text-muted transition', expanded && 'rotate-90')} />}
@@ -197,11 +197,11 @@ export function ActivityLog({ data }: AdminProps) {
             </div>
           );
         })}
-        {!loading && events.length === 0 && <Empty>No hay actividad todavía.</Empty>}
+        {!loading && events.length === 0 && <Empty>No activity yet.</Empty>}
       </div>
       {hasMore && (
         <Button variant="ghost" className="mt-2 w-full" onClick={() => load(events.at(-1)?.id)}>
-          Cargar más
+          Load more
         </Button>
       )}
     </Card>
@@ -224,13 +224,13 @@ function SpamDetails({
   const links = Array.isArray(d.links) ? (d.links as string[]) : [];
   const channels = Array.isArray(d.channelIds) ? (d.channelIds as string[]) : [];
   const rows: [string, React.ReactNode][] = [
-    ['Motivo', String(d.reasonText ?? d.reason)],
-    ['Usuario', `${d.userTag ?? ''} (${e.targetId})`],
-    ['Canales', channels.map(channelName).join(', ') || '—'],
-    ['Mensajes borrados', String(d.messagesDeleted ?? 0)],
+    ['Reason', String(d.reasonText ?? d.reason)],
+    ['User', `${d.userTag ?? ''} (${e.targetId})`],
+    ['Channels', channels.map(channelName).join(', ') || '—'],
+    ['Messages deleted', String(d.messagesDeleted ?? 0)],
   ];
   if (d.error) rows.push(['Error', <span className="text-warn">{String(d.error)}</span>]);
-  if (links.length) rows.push(['Enlaces', <span className="whitespace-pre-wrap break-all font-mono text-xs">{links.join('\n')}</span>]);
+  if (links.length) rows.push(['Links', <span className="whitespace-pre-wrap break-all font-mono text-xs">{links.join('\n')}</span>]);
 
   return (
     <div className="flex flex-col gap-1.5 px-3.5 pb-3.5 pl-10 text-[13px] max-sm:pl-3.5">
@@ -242,7 +242,7 @@ function SpamDetails({
       ))}
       {typeof d.content === 'string' && d.content && (
         <div>
-          <div className="text-xs text-muted">Mensaje original</div>
+          <div className="text-xs text-muted">Original message</div>
           <pre className="mt-1 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-md bg-bg p-2.5 text-xs">{d.content}</pre>
         </div>
       )}
@@ -250,10 +250,10 @@ function SpamDetails({
         <div>
           <ConfirmButton
             icon={CircleCheck}
-            confirmLabel="¿Seguro? Quitar timeout"
-            onConfirm={() => run(() => api(`/members/${e.targetId}/untimeout`, { method: 'POST' }).then(onChange), 'Timeout quitado')}
+            confirmLabel="Sure? Remove timeout"
+            onConfirm={() => run(() => api(`/members/${e.targetId}/untimeout`, { method: 'POST' }).then(onChange), 'Timeout removed')}
           >
-            Quitar timeout
+            Remove timeout
           </ConfirmButton>
         </div>
       )}

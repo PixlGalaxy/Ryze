@@ -34,26 +34,26 @@ export function App() {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-3">
           <Spinner />
-          <p className="text-muted">Conectando con Discord…</p>
+          <p className="text-muted">Connecting to Discord…</p>
         </div>
       );
     case 'outside':
       return (
-        <CenterScreen icon={Gamepad2} title="Abre Ryze desde Discord">
-          Este panel funciona como Activity de Discord. En tu servidor abre el lanzador de apps (🚀) y elige Ryze, o usa <code>/panel</code>.
+        <CenterScreen icon={Gamepad2} title="Open Ryze from Discord">
+          This panel runs as a Discord Activity. In your server, open the app launcher (🚀) and pick Ryze, or use <code>/panel</code>.
         </CenterScreen>
       );
     case 'error':
       return (
-        <CenterScreen icon={TriangleAlert} title="No se pudo cargar el panel">
+        <CenterScreen icon={TriangleAlert} title="Could not load the panel">
           {boot.message}
         </CenterScreen>
       );
     case 'denied': {
       const texts = {
-        no_guild: ['Solo en servidores', 'Abre el panel desde un canal de un servidor, no desde mensajes directos.'],
-        bot_not_in_guild: ['Ryze no está en este servidor', 'Invita al bot al servidor para usar el panel.'],
-        not_member: ['Sin acceso', 'No eres miembro de este servidor.'],
+        no_guild: ['Servers only', 'Open the panel from a server channel, not from direct messages.'],
+        bot_not_in_guild: ['Ryze is not in this server', 'Invite the bot to the server to use the panel.'],
+        not_member: ['No access', 'You are not a member of this server.'],
       } as const;
       const [title, text] = texts[boot.reason];
       return (
@@ -73,7 +73,7 @@ function Shell() {
 
   if (!me.data) {
     return me.error ? (
-      <CenterScreen icon={TriangleAlert} title="No se pudo cargar el panel">
+      <CenterScreen icon={TriangleAlert} title="Could not load the panel">
         {me.error}
       </CenterScreen>
     ) : (
@@ -100,18 +100,18 @@ function Shell() {
             <Avatar src={user.avatar} size={16} />
             <span className="truncate">
               {user.name}
-              {access === 'owner' ? ' · Dueño' : access === 'manager' ? ' · Manager de Ryze' : ''}
+              {access === 'owner' ? ' · Server owner' : access === 'manager' ? ' · Ryze manager' : ''}
             </span>
           </div>
         </div>
         {isAdmin &&
           (mode === 'member' ? (
             <Button variant="primary" icon={Settings} onClick={() => setMode('admin')}>
-              <span className="max-sm:hidden">Configurar Ryze</span>
+              <span className="max-sm:hidden">Configure Ryze</span>
             </Button>
           ) : (
             <Button variant="subtle" icon={ArrowLeft} onClick={() => setMode('member')}>
-              <span className="max-sm:hidden">Mi canal</span>
+              <span className="max-sm:hidden">My channel</span>
             </Button>
           ))}
       </header>

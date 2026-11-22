@@ -19,30 +19,30 @@ export function Permissions({ data, setData }: AdminProps) {
     run(async () => {
       const res = await api<{ settings: GuildData['settings']; users: Record<string, UserInfo> }>('/settings/managers', { method: 'PUT', body: draft });
       setData((d) => ({ ...d, settings: res.settings, users: { ...d.users, ...res.users } }));
-    }, 'Permisos guardados');
+    }, 'Permissions saved');
 
   return (
     <>
       <Card
-        title="Quién puede configurar Ryze"
+        title="Who can configure Ryze"
         icon={Users}
         description={
           isOwner
-            ? 'Como dueño del servidor siempre tienes acceso. Agrega aquí a las personas o roles que también pueden ver "Configurar Ryze" y usar /voice setup. Ellos pueden configurar todo menos esta sección.'
-            : 'Solo el dueño del servidor puede cambiar esta sección.'
+            ? 'As the server owner you always have access. Add the people or roles that can also see "Configure Ryze" and use /voice setup. They can configure everything except this section.'
+            : 'Only the server owner can change this section.'
         }
       >
-        <SectionLabel>Dueño</SectionLabel>
+        <SectionLabel>Server owner</SectionLabel>
         <UserRow user={owner} badge={<Crown className="ml-1.5 inline size-3.5 text-warn" />} />
 
         <SectionLabel>Managers</SectionLabel>
         <div className="flex flex-col gap-1">
           {draft.userIds.map((id) => (
             <UserRow key={id} user={data.users[id] ?? { id }}>
-              {isOwner && <IconButton icon={UserMinus} label="Quitar" onClick={() => set('userIds', draft.userIds.filter((x) => x !== id))} />}
+              {isOwner && <IconButton icon={UserMinus} label="Remove" onClick={() => set('userIds', draft.userIds.filter((x) => x !== id))} />}
             </UserRow>
           ))}
-          {draft.userIds.length === 0 && <Empty>Todavía no hay managers.</Empty>}
+          {draft.userIds.length === 0 && <Empty>No managers yet.</Empty>}
         </div>
         {isOwner && (
           <MemberSearch
@@ -57,15 +57,15 @@ export function Permissions({ data, setData }: AdminProps) {
                   clear();
                 }}
               >
-                Agregar
+                Add
               </Button>
             )}
           />
         )}
 
-        <SectionLabel>Roles con acceso</SectionLabel>
+        <SectionLabel>Roles with access</SectionLabel>
         {isOwner ? (
-          <Field hint="Cualquiera con estos roles tendrá acceso de manager.">
+          <Field hint="Anyone with these roles gets manager access.">
             <RolePicker roles={data.roles} value={draft.roleIds} onChange={(ids) => set('roleIds', ids)} />
           </Field>
         ) : (
@@ -80,7 +80,7 @@ export function Permissions({ data, setData }: AdminProps) {
                 );
               })
             ) : (
-              <Empty>Ninguno</Empty>
+              <Empty>None</Empty>
             )}
           </div>
         )}

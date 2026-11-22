@@ -29,31 +29,31 @@ export function VoiceSettings({ data, setData }: AdminProps) {
     run(async () => {
       const saved = await api<GuildData['settings']>('/settings/voice', { method: 'PUT', body: draft });
       setData((d) => ({ ...d, settings: saved }));
-    }, 'Configuración de voz guardada');
+    }, 'Voice settings saved');
 
   return (
     <>
       <Card
         title="Join to Create"
         icon={DoorOpen}
-        description="Cuando alguien entra al canal lobby, Ryze le crea su propio canal de voz en la categoría elegida y lo borra cuando queda vacío. También puedes crearlos con /voice setup."
+        description="When someone joins the lobby channel, Ryze creates their own voice channel in the chosen category and deletes it once it is empty. You can also create both with /voice setup."
       >
         <div className="grid gap-x-3 sm:grid-cols-2">
-          <Field label="Canal lobby" hint="Canal de voz al que entran para crear su canal.">
+          <Field label="Lobby channel" hint="Voice channel members join to create their channel.">
             <ChannelSelect channels={data.channels} type="voice" value={draft.lobbyChannelId} onChange={(v) => set('lobbyChannelId', v)} />
           </Field>
-          <Field label="Categoría" hint="Dónde se crean los canales temporales.">
+          <Field label="Category" hint="Where temporary channels are created.">
             <ChannelSelect channels={data.channels} type="category" value={draft.categoryId} onChange={(v) => set('categoryId', v)} />
           </Field>
         </div>
       </Card>
 
-      <Card title="Canales nuevos" icon={Sparkles}>
+      <Card title="New channels" icon={Sparkles}>
         <Field
-          label="Nombre por defecto"
+          label="Default name"
           hint={
             <>
-              Variables: <code>{'{user}'}</code> nombre, <code>{'{nick}'}</code> apodo, <code>{'{username}'}</code> usuario, <code>{'{count}'}</code> número. Vista previa:{' '}
+              Variables: <code>{'{user}'}</code> name, <code>{'{nick}'}</code> nickname, <code>{'{username}'}</code> username, <code>{'{count}'}</code> number. Preview:{' '}
               <b className="text-fg">{preview(draft.nameTemplate)}</b>
             </>
           }
@@ -61,25 +61,25 @@ export function VoiceSettings({ data, setData }: AdminProps) {
           <TextInput value={draft.nameTemplate} onChange={(v) => set('nameTemplate', v)} placeholder="{user}'s channel" />
         </Field>
         <div className="grid gap-x-3 sm:grid-cols-3">
-          <Field label="Límite de usuarios" hint="0 = sin límite">
+          <Field label="User limit" hint="0 = no limit">
             <NumberInput value={draft.defaultLimit} min={0} max={99} onChange={(v) => set('defaultLimit', v)} />
           </Field>
-          <Field label="Bitrate" hint="0 = el de Discord">
+          <Field label="Bitrate" hint="0 = Discord default">
             <NumberInput value={draft.bitrateKbps} min={0} max={384} onChange={(v) => set('bitrateKbps', v)} suffix="kbps" />
           </Field>
-          <Field label="Cooldown" hint="Entre canales por usuario">
+          <Field label="Cooldown" hint="Between channels, per user">
             <NumberInput value={draft.cooldownSeconds} min={0} max={600} onChange={(v) => set('cooldownSeconds', v)} suffix="s" />
           </Field>
         </div>
         <Toggle
-          label="Bloqueados por defecto"
-          hint="Solo entran el dueño y quienes él permita."
+          label="Locked by default"
+          hint="Only the owner and the people they permit can join."
           checked={draft.lockedByDefault}
           onChange={(v) => set('lockedByDefault', v)}
         />
         <Toggle
-          label="Los miembros pueden personalizar su canal"
-          hint="Cambiar nombre y límite desde el panel o con /voice. Ryze recuerda su elección."
+          label="Members can customize their channel"
+          hint="Change the name and limit from the panel or with /voice. Ryze remembers their choice."
           checked={draft.allowUserCustomization}
           onChange={(v) => set('allowUserCustomization', v)}
         />
@@ -97,7 +97,7 @@ function ActiveChannels() {
   const [removing, setRemoving] = useState<string | null>(null);
 
   return (
-    <Card title="Canales activos" icon={Volume2}>
+    <Card title="Active channels" icon={Volume2}>
       <div className="mt-2 flex flex-col gap-1">
         {list.data?.channels.map((c) => {
           const owner = list.data!.users[c.ownerId];
@@ -111,7 +111,7 @@ function ActiveChannels() {
                 </div>
                 <div className="truncate text-xs text-muted">
                   {owner?.name ?? c.ownerId} · {c.members}
-                  {c.limit ? `/${c.limit}` : ''} conectados · creado {timeAgo(c.createdAt)}
+                  {c.limit ? `/${c.limit}` : ''} connected · created {timeAgo(c.createdAt)}
                 </div>
               </div>
               <ConfirmButton
@@ -119,16 +119,16 @@ function ActiveChannels() {
                 loading={removing === c.channelId}
                 onConfirm={async () => {
                   setRemoving(c.channelId);
-                  await run(() => api(`/voice-channels/${c.channelId}`, { method: 'DELETE' }).then(list.reload), 'Canal borrado');
+                  await run(() => api(`/voice-channels/${c.channelId}`, { method: 'DELETE' }).then(list.reload), 'Channel deleted');
                   setRemoving(null);
                 }}
               >
-                Borrar
+                Delete
               </ConfirmButton>
             </div>
           );
         })}
-        {list.data && list.data.channels.length === 0 && <Empty>No hay canales temporales activos.</Empty>}
+        {list.data && list.data.channels.length === 0 && <Empty>No active temporary channels.</Empty>}
         {list.error && <Empty>{list.error}</Empty>}
       </div>
     </Card>

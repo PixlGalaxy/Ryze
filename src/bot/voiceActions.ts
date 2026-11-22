@@ -45,36 +45,36 @@ export async function setLocked(channel: VoiceBasedChannel, actor: GuildMember, 
 }
 
 export async function permitUser(channel: VoiceBasedChannel, actor: GuildMember, userId: string): Promise<void> {
-  if (userId === actor.id) fail('Ya eres el dueño del canal.');
+  if (userId === actor.id) fail('You already own this channel.');
   await channel.permissionOverwrites.edit(userId, { ViewChannel: true, Connect: true }, { type: OverwriteType.Member });
   events.log(channel.guild.id, 'voice.permit', { actorId: actor.id, targetId: userId, data: { channelId: channel.id } });
 }
 
 export async function rejectUser(channel: VoiceBasedChannel, actor: GuildMember, userId: string): Promise<void> {
-  if (userId === actor.id) fail('No puedes rechazarte a ti mismo.');
-  if (userId === channel.client.user.id) fail('No puedes rechazar a Ryze.');
+  if (userId === actor.id) fail('You can\'t reject yourself.');
+  if (userId === channel.client.user.id) fail('You can\'t reject Ryze.');
   const inside = channel.members.get(userId);
-  if (inside) await inside.voice.disconnect('Ryze: rechazado por el dueño del canal').catch(() => {});
+  if (inside) await inside.voice.disconnect('Ryze: rejected by the channel owner').catch(() => {});
   await channel.permissionOverwrites.edit(userId, { Connect: false }, { type: OverwriteType.Member });
   events.log(channel.guild.id, 'voice.reject', { actorId: actor.id, targetId: userId, data: { channelId: channel.id } });
 }
 
 /** Removes a permit or a reject, back to the channel default. */
 export async function clearUserAccess(channel: VoiceBasedChannel, actor: GuildMember, userId: string): Promise<void> {
-  if (userId === actor.id || userId === channel.client.user.id) fail('No puedes cambiar ese acceso.');
-  await channel.permissionOverwrites.delete(userId, 'Ryze: acceso restablecido por el dueño');
+  if (userId === actor.id || userId === channel.client.user.id) fail('You can\'t change that access.');
+  await channel.permissionOverwrites.delete(userId, 'Ryze: access reset by the owner');
 }
 
 export async function kickUser(channel: VoiceBasedChannel, actor: GuildMember, userId: string): Promise<void> {
-  if (userId === actor.id) fail('No puedes expulsarte a ti mismo.');
+  if (userId === actor.id) fail('You can\'t kick yourself.');
   const inside = channel.members.get(userId);
-  if (!inside) fail('Esa persona ya no está en el canal.');
-  await inside.voice.disconnect('Ryze: expulsado por el dueño del canal');
+  if (!inside) fail('That person is no longer in the channel.');
+  await inside.voice.disconnect('Ryze: kicked by the channel owner');
 }
 
 export async function setLimit(channel: VoiceBasedChannel, actor: GuildMember, limit: number): Promise<void> {
-  if (!canCustomize(actor)) fail('Los administradores desactivaron esta opción.');
-  if (!Number.isInteger(limit) || limit < 0 || limit > 99) fail('El límite debe ser un número entre 0 y 99.');
+  if (!canCustomize(actor)) fail('The admins turned this option off.');
+  if (!Number.isInteger(limit) || limit < 0 || limit > 99) fail('The limit must be a number from 0 to 99.');
   await channel.setUserLimit(limit);
   userSettings.setLimit(channel.guild.id, actor.id, limit);
   events.log(channel.guild.id, 'voice.limit', { actorId: actor.id, targetId: channel.id, data: { limit } });
@@ -85,9 +85,9 @@ export async function setLimit(channel: VoiceBasedChannel, actor: GuildMember, l
  * the rename is queued by the rate limit instead of applied right away.
  */
 export async function renameChannel(channel: VoiceBasedChannel, actor: GuildMember, rawName: string): Promise<boolean> {
-  if (!canCustomize(actor)) fail('Los administradores desactivaron esta opción.');
+  if (!canCustomize(actor)) fail('The admins turned this option off.');
   const name = rawName.trim().slice(0, 100);
-  if (!name) fail('El nombre no puede estar vacío.');
+  if (!name) fail('The name can\'t be empty.');
   userSettings.setName(channel.guild.id, actor.id, name);
   events.log(channel.guild.id, 'voice.rename', { actorId: actor.id, targetId: channel.id, data: { name } });
   return Promise.race([
@@ -98,12 +98,12 @@ export async function renameChannel(channel: VoiceBasedChannel, actor: GuildMemb
 
 export async function claimChannel(member: GuildMember): Promise<VoiceBasedChannel> {
   const channel = member.voice.channel;
-  if (!channel) fail('No estás en un canal de voz.');
+  if (!channel) fail('You are not in a voice channel.');
   const temp = tempChannels.get(channel.id);
-  if (!temp) fail('Ese canal no es un canal temporal de Ryze.');
-  if (temp.ownerId === member.id) fail('Ya eres el dueño de este canal.');
-  if (channel.members.has(temp.ownerId)) fail(`Este canal ya es de <@${temp.ownerId}>.`);
-  if (tempChannels.byOwner(member.guild.id, member.id)) fail('Ya tienes otro canal temporal.');
+  if (!temp) fail('That is not a Ryze temporary channel.');
+  if (temp.ownerId === member.id) fail('You already own this channel.');
+  if (channel.members.has(temp.ownerId)) fail(`This channel already belongs to <@${temp.ownerId}>.`);
+  if (tempChannels.byOwner(member.guild.id, member.id)) fail('You already have another temporary channel.');
   tempChannels.setOwner(channel.id, member.id);
   await channel.permissionOverwrites
     .edit(member.id, { ViewChannel: true, Connect: true }, { type: OverwriteType.Member })
@@ -114,10 +114,10 @@ export async function claimChannel(member: GuildMember): Promise<VoiceBasedChann
 
 export async function transferChannel(channel: VoiceBasedChannel, actor: GuildMember, userId: string): Promise<void> {
   const target = channel.members.get(userId);
-  if (!target) fail('Solo puedes transferir el canal a alguien que esté dentro.');
-  if (target.user.bot) fail('No puedes transferir el canal a un bot.');
-  if (target.id === actor.id) fail('Ya eres el dueño.');
-  if (tempChannels.byOwner(channel.guild.id, target.id)) fail('Esa persona ya tiene otro canal temporal.');
+  if (!target) fail('You can only transfer the channel to someone who is in it.');
+  if (target.user.bot) fail('You can\'t transfer the channel to a bot.');
+  if (target.id === actor.id) fail('You are already the owner.');
+  if (tempChannels.byOwner(channel.guild.id, target.id)) fail('That person already has another temporary channel.');
   tempChannels.setOwner(channel.id, target.id);
   await channel.permissionOverwrites
     .edit(target.id, { ViewChannel: true, Connect: true }, { type: OverwriteType.Member })

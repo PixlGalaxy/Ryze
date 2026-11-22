@@ -69,16 +69,16 @@ function OwnedChannel({ me, channel, reload }: { me: MeData; channel: ChannelSta
           <div className="text-xs text-muted">
             <Users className="mr-1 inline size-3.5" />
             {channel.members.length}
-            {channel.limit ? ` / ${channel.limit}` : ''} conectados · {channel.locked ? 'Bloqueado' : 'Abierto'} · creado {timeAgo(channel.createdAt)}
+            {channel.limit ? ` / ${channel.limit}` : ''} connected · {channel.locked ? 'Locked' : 'Open'} · created {timeAgo(channel.createdAt)}
           </div>
         </div>
         <Button
           variant={channel.locked ? 'secondary' : 'subtle'}
           icon={channel.locked ? LockOpen : Lock}
           loading={busy}
-          onClick={() => patch({ locked: !channel.locked }, channel.locked ? 'Canal desbloqueado' : 'Canal bloqueado')}
+          onClick={() => patch({ locked: !channel.locked }, channel.locked ? 'Channel unlocked' : 'Channel locked')}
         >
-          {channel.locked ? 'Desbloquear' : 'Bloquear'}
+          {channel.locked ? 'Unlock' : 'Lock'}
         </Button>
       </section>
 
@@ -86,82 +86,82 @@ function OwnedChannel({ me, channel, reload }: { me: MeData; channel: ChannelSta
         <SettingsCard me={me} channel={channel} patch={patch} />
 
         {/* Members */}
-        <Card title="En el canal" icon={Users}>
+        <Card title="In the channel" icon={Users}>
           <div className="mt-2 flex flex-col gap-1">
             {channel.members.map((m) => (
               <UserRow
                 key={m.id}
                 user={m}
-                badge={m.id === channel.ownerId && <Crown className="ml-1.5 inline size-3.5 text-warn" aria-label="Dueño" />}
+                badge={m.id === channel.ownerId && <Crown className="ml-1.5 inline size-3.5 text-warn" aria-label="Owner" />}
               >
                 {m.id !== me.user.id && !m.bot && (
                   <>
                     <IconButton
                       icon={Crown}
-                      label="Hacer dueño"
+                      label="Make owner"
                       onClick={() =>
-                        run(() => api('/me/channel/transfer', { method: 'POST', body: { userId: m.id } }).then(reload), `${m.name} ahora es el dueño`)
+                        run(() => api('/me/channel/transfer', { method: 'POST', body: { userId: m.id } }).then(reload), `${m.name} is now the owner`)
                       }
                     />
                     <IconButton
                       icon={LogOut}
-                      label="Expulsar"
-                      onClick={() => run(() => api('/me/channel/kick', { method: 'POST', body: { userId: m.id } }).then(reload), `${m.name} expulsado`)}
+                      label="Kick"
+                      onClick={() => run(() => api('/me/channel/kick', { method: 'POST', body: { userId: m.id } }).then(reload), `${m.name} kicked`)}
                     />
-                    <IconButton icon={Ban} label="Expulsar y bloquear" className="hover:!text-red-400" onClick={() => access(m.id, 'reject', `${m.name} bloqueado`)} />
+                    <IconButton icon={Ban} label="Kick and block" className="hover:!text-red-400" onClick={() => access(m.id, 'reject', `${m.name} blocked`)} />
                   </>
                 )}
               </UserRow>
             ))}
-            {others.length === 0 && <Empty>Estás solo por ahora.</Empty>}
+            {others.length === 0 && <Empty>It's just you for now.</Empty>}
           </div>
         </Card>
       </div>
 
       {/* Access */}
       <Card
-        title="Quién puede entrar"
+        title="Who can join"
         icon={ShieldCheck}
         description={
           channel.locked
-            ? 'El canal está bloqueado: solo pueden entrar tú y las personas permitidas.'
-            : 'El canal está abierto para todos menos los bloqueados. Bloquéalo para que solo entren los permitidos.'
+            ? 'The channel is locked: only you and permitted people can join.'
+            : 'The channel is open to everyone except blocked people. Lock it so only permitted people can join.'
         }
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <SectionLabel>Permitidos</SectionLabel>
+            <SectionLabel>Permitted</SectionLabel>
             <div className="flex flex-col gap-1">
               {channel.permitted.map((u) => (
                 <UserRow key={u.id} user={u}>
-                  <IconButton icon={UserX} label="Quitar permiso" onClick={() => access(u.id, 'clear', 'Permiso quitado')} />
+                  <IconButton icon={UserX} label="Remove permission" onClick={() => access(u.id, 'clear', 'Permission removed')} />
                 </UserRow>
               ))}
-              {channel.permitted.length === 0 && <Empty>Nadie todavía.</Empty>}
+              {channel.permitted.length === 0 && <Empty>No one yet.</Empty>}
             </div>
           </div>
           <div>
-            <SectionLabel>Bloqueados</SectionLabel>
+            <SectionLabel>Blocked</SectionLabel>
             <div className="flex flex-col gap-1">
               {channel.rejected.map((u) => (
                 <UserRow key={u.id} user={u}>
-                  <IconButton icon={Check} label="Desbloquear" onClick={() => access(u.id, 'clear', 'Desbloqueado')} />
+                  <IconButton icon={Check} label="Unblock" onClick={() => access(u.id, 'clear', 'Unblocked')} />
                 </UserRow>
               ))}
-              {channel.rejected.length === 0 && <Empty>Nadie bloqueado.</Empty>}
+              {channel.rejected.length === 0 && <Empty>No one blocked.</Empty>}
             </div>
           </div>
         </div>
-        <SectionLabel>Agregar persona</SectionLabel>
+        <SectionLabel>Add someone</SectionLabel>
         <MemberSearch
           exclude={knownIds}
           actions={(u, clear) => (
             <>
-              <Button size="sm" variant="secondary" icon={UserCheck} onClick={() => access(u.id, 'permit', `${u.name} permitido`).then(clear)}>
-                Permitir
+              <Button size="sm" variant="secondary" icon={UserCheck} onClick={() => access(u.id, 'permit', `${u.name} permitted`).then(clear)}>
+                Permit
               </Button>
-              <Button size="sm" variant="danger" icon={Ban} onClick={() => access(u.id, 'reject', `${u.name} bloqueado`).then(clear)}>
-                Bloquear
+              <Button size="sm" variant="danger" icon={Ban} onClick={() => access(u.id, 'reject', `${u.name} blocked`).then(clear)}>
+                Block
               </Button>
             </>
           )}
@@ -198,20 +198,20 @@ function SettingsCard({
 
   if (!me.canCustomize) {
     return (
-      <Card title="Ajustes" icon={Pencil} description="Los administradores desactivaron el cambio de nombre y límite en este servidor.">
+      <Card title="Settings" icon={Pencil} description="The admins turned off name and limit changes in this server.">
         <p className="text-sm">
-          Límite actual: <b>{channel.limit || 'sin límite'}</b>
+          Current limit: <b>{channel.limit || 'no limit'}</b>
         </p>
       </Card>
     );
   }
 
   return (
-    <Card title="Ajustes" icon={Pencil}>
-      <Field label="Nombre" hint="Discord permite 2 cambios de nombre cada 10 minutos.">
+    <Card title="Settings" icon={Pencil}>
+      <Field label="Name" hint="Discord allows 2 renames every 10 minutes.">
         <TextInput value={name} onChange={setName} maxLength={100} />
       </Field>
-      <Field label="Límite de usuarios" hint="0 = sin límite.">
+      <Field label="User limit" hint="0 = no limit.">
         <NumberInput value={limit} min={0} max={99} onChange={setLimit} />
       </Field>
       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -241,13 +241,13 @@ function SettingsCard({
             setNotice(null);
             const res = await patch(
               { ...(name.trim() !== channel.name && { name: name.trim() }), ...(limit !== channel.limit && { limit }) },
-              'Cambios guardados',
+              'Changes saved',
             );
-            if (res && !res.renamed) setNotice('Discord está limitando los cambios de nombre: se aplicará en unos minutos.');
+            if (res && !res.renamed) setNotice('Discord is rate-limiting renames: it will apply in a few minutes.');
             setSaving(false);
           }}
         >
-          Guardar
+          Save
         </Button>
       </div>
     </Card>
@@ -262,32 +262,32 @@ function NoChannel({ me, reload }: { me: MeData; reload: () => Promise<void> }) 
   return (
     <div className="flex flex-col gap-3.5">
       {me.claimable ? (
-        <Card title="Canal sin dueño" icon={Crown}>
+        <Card title="Ownerless channel" icon={Crown}>
           <p className="text-muted">
-            El dueño de <b className="text-fg">{me.claimable.name}</b> se fue. Puedes quedártelo y gestionarlo tú.
+            The owner of <b className="text-fg">{me.claimable.name}</b> left. You can take it over and manage it.
           </p>
-          <Button className="mt-3" variant="primary" icon={Crown} loading={busy} onClick={() => run(() => api('/me/claim', { method: 'POST' }).then(reload), 'Ahora eres el dueño')}>
-            Reclamar canal
+          <Button className="mt-3" variant="primary" icon={Crown} loading={busy} onClick={() => run(() => api('/me/claim', { method: 'POST' }).then(reload), 'You are now the owner')}>
+            Claim channel
           </Button>
         </Card>
       ) : (
-        <Card title="Todavía no tienes canal" icon={Sparkles}>
+        <Card title="You don't have a channel yet" icon={Sparkles}>
           {!me.lobby ? (
-            <p className="text-muted">Los administradores todavía no configuraron Ryze en este servidor.</p>
+            <p className="text-muted">The admins haven't set up Ryze in this server yet.</p>
           ) : me.inVoice && !me.inVoice.isLobby ? (
             <>
               <p className="text-muted">
-                Estás en <b className="text-fg">{me.inVoice.name}</b>. Crea tu propio canal y Ryze te moverá ahí.
+                You are in <b className="text-fg">{me.inVoice.name}</b>. Create your own channel and Ryze will move you there.
               </p>
-              <Button className="mt-3" variant="primary" icon={Plus} loading={busy} onClick={() => run(() => api('/me/create', { method: 'POST' }).then(reload), 'Canal creado')}>
-                Crear mi canal
+              <Button className="mt-3" variant="primary" icon={Plus} loading={busy} onClick={() => run(() => api('/me/create', { method: 'POST' }).then(reload), 'Channel created')}>
+                Create my channel
               </Button>
             </>
           ) : (
             <p className="flex items-start gap-2 text-muted">
               <DoorOpen className="mt-0.5 size-4 shrink-0 text-accent" />
               <span>
-                Entra al canal de voz <b className="text-fg">🔊 {me.lobby.name}</b> y Ryze creará un canal solo para ti. Se borra cuando queda vacío.
+                Join the <b className="text-fg">🔊 {me.lobby.name}</b> voice channel and Ryze will create a channel just for you. It is deleted once it is empty.
               </span>
             </p>
           )}
@@ -305,29 +305,29 @@ function PreferencesCard({ me, reload }: { me: MeData; reload: () => Promise<voi
   const dirty = name.trim() !== (me.preferences.channelName ?? '') || limit !== (me.preferences.channelLimit ?? 0);
 
   return (
-    <Card title="Mis preferencias" icon={Pencil} description="Se usan cada vez que Ryze te crea un canal.">
+    <Card title="My preferences" icon={Pencil} description="Used every time Ryze creates a channel for you.">
       <div className="grid gap-x-3 sm:grid-cols-2">
-        <Field label="Nombre" hint="Vacío = el nombre por defecto del servidor.">
-          <TextInput value={name} onChange={setName} placeholder={`Canal de ${me.user.name}`} />
+        <Field label="Name" hint="Empty = the server's default name.">
+          <TextInput value={name} onChange={setName} placeholder={`${me.user.name}'s channel`} />
         </Field>
-        <Field label="Límite de usuarios" hint="0 = el del servidor.">
+        <Field label="User limit" hint="0 = the server default.">
           <NumberInput value={limit} min={0} max={99} onChange={setLimit} />
         </Field>
       </div>
       <div className="mt-4 flex justify-end gap-2">
         {(me.preferences.channelName || me.preferences.channelLimit) && (
           <ConfirmButton
-            confirmLabel="¿Borrar preferencias?"
+            confirmLabel="Clear preferences?"
             onConfirm={() =>
               run(async () => {
                 await api('/me/preferences', { method: 'PUT', body: { channelName: null, channelLimit: null } });
                 setName('');
                 setLimit(0);
                 await reload();
-              }, 'Preferencias borradas')
+              }, 'Preferences cleared')
             }
           >
-            Restablecer
+            Reset
           </ConfirmButton>
         )}
         <Button
@@ -338,11 +338,11 @@ function PreferencesCard({ me, reload }: { me: MeData; reload: () => Promise<voi
           onClick={() =>
             run(
               () => api('/me/preferences', { method: 'PUT', body: { channelName: name.trim() || null, channelLimit: limit || null } }).then(reload),
-              'Preferencias guardadas',
+              'Preferences saved',
             )
           }
         >
-          Guardar
+          Save
         </Button>
       </div>
     </Card>

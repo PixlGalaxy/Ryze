@@ -183,7 +183,7 @@ export function IconButton({ icon: Icon, label, className, ...props }: ButtonHTM
 /** Two-step button. Native confirm() is blocked inside Activities. */
 export function ConfirmButton({
   onConfirm,
-  confirmLabel = '¿Seguro?',
+  confirmLabel = 'Sure?',
   children,
   ...props
 }: Omit<Parameters<typeof Button>[0], 'onClick'> & { onConfirm: () => void | Promise<void>; confirmLabel?: string }) {
@@ -304,7 +304,7 @@ export function ChannelSelect({
   type,
   value,
   onChange,
-  emptyLabel = '— Ninguno —',
+  emptyLabel = '— None —',
 }: {
   channels: ChannelInfo[];
   type: ChannelInfo['type'];
@@ -315,7 +315,7 @@ export function ChannelSelect({
   const categories = new Map(channels.filter((c) => c.type === 'category').map((c) => [c.id, c.name]));
   const groups = new Map<string, ChannelInfo[]>();
   for (const c of channels.filter((c) => c.type === type)) {
-    const key = type === 'category' ? '' : c.parentId ? (categories.get(c.parentId) ?? 'Sin categoría') : 'Sin categoría';
+    const key = type === 'category' ? '' : c.parentId ? (categories.get(c.parentId) ?? 'No category') : 'No category';
     groups.set(key, [...(groups.get(key) ?? []), c]);
   }
   const prefix = type === 'voice' ? '🔊 ' : type === 'text' ? '# ' : '';
@@ -352,7 +352,7 @@ export function Chip({ children, color, onRemove }: { children: ReactNode; color
     >
       {children}
       {onRemove ? (
-        <button type="button" aria-label="Quitar" onClick={onRemove} className="cursor-pointer rounded-full p-0.5 text-muted hover:text-fg">
+        <button type="button" aria-label="Remove" onClick={onRemove} className="cursor-pointer rounded-full p-0.5 text-muted hover:text-fg">
           <X className="size-3.5" />
         </button>
       ) : (
@@ -371,14 +371,14 @@ export function RolePicker({ roles, value, onChange }: { roles: RoleInfo[]; valu
             const role = roles.find((r) => r.id === id);
             return (
               <Chip key={id} color={role?.color} onRemove={() => onChange(value.filter((v) => v !== id))}>
-                @{role?.name ?? 'rol borrado'}
+                @{role?.name ?? 'deleted role'}
               </Chip>
             );
           })}
         </div>
       )}
       <select className={inputClass} value="" onChange={(e) => e.target.value && onChange([...value, e.target.value])}>
-        <option value="">+ Agregar rol</option>
+        <option value="">+ Add role</option>
         {roles
           .filter((r) => !r.managed && !value.includes(r.id))
           .map((r) => (
@@ -420,7 +420,7 @@ export function TagEditor({ value, onChange, placeholder }: { value: string[]; o
           }}
         />
         <Button variant="secondary" icon={Plus} onClick={add}>
-          Agregar
+          Add
         </Button>
       </div>
     </div>
@@ -456,7 +456,7 @@ export function UserRow({ user, children, badge }: { user: Partial<UserInfo> & {
 export function MemberSearch({
   exclude = [],
   actions,
-  placeholder = 'Buscar miembro por nombre…',
+  placeholder = 'Search members by name…',
 }: {
   exclude?: string[];
   actions: (user: UserInfo, clear: () => void) => ReactNode;
@@ -490,7 +490,7 @@ export function MemberSearch({
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
         <TextInput value={query} onChange={setQuery} placeholder={placeholder} className="pl-9" type="search" />
       </div>
-      {visible && (visible.length ? visible.map((u) => <UserRow key={u.id} user={u}>{actions(u, clear)}</UserRow>) : <Empty>Sin resultados.</Empty>)}
+      {visible && (visible.length ? visible.map((u) => <UserRow key={u.id} user={u}>{actions(u, clear)}</UserRow>) : <Empty>No results.</Empty>)}
     </div>
   );
 }
@@ -505,13 +505,13 @@ export function SaveBar({ dirty, saving, onSave, onReset }: { dirty: boolean; sa
         dirty ? 'translate-y-0' : 'translate-y-[160%]',
       )}
     >
-      <span>Tienes cambios sin guardar</span>
+      <span>You have unsaved changes</span>
       <div className="flex gap-2">
         <Button variant="ghost" onClick={onReset}>
-          Descartar
+          Discard
         </Button>
         <Button variant="primary" loading={saving} onClick={onSave}>
-          Guardar cambios
+          Save changes
         </Button>
       </div>
     </div>

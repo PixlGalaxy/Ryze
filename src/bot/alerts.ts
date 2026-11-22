@@ -52,7 +52,7 @@ export function openActivityRow(): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId(OPEN_ACTIVITY_BUTTON)
-      .setLabel('Abrir panel de Ryze')
+      .setLabel('Open Ryze panel')
       .setEmoji('🛡️')
       .setStyle(ButtonStyle.Primary),
   );

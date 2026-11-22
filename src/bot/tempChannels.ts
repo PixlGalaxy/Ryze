@@ -50,9 +50,9 @@ export async function createFor(member: GuildMember, opts: { fromPanel?: boolean
   const last = lastCreated.get(key) ?? 0;
   const waitMs = last + voice.cooldownSeconds * 1000 - now;
   if (waitMs > 0) {
-    if (opts.fromPanel) throw new VoiceActionError(`Espera ${Math.ceil(waitMs / 1000)} s antes de crear otro canal.`);
+    if (opts.fromPanel) throw new VoiceActionError(`Wait ${Math.ceil(waitMs / 1000)} s before creating another channel.`);
     await member
-      .send(`Estás creando canales muy rápido. Espera ${Math.ceil(waitMs / 1000)} s e inténtalo de nuevo.`)
+      .send(`You are creating channels too fast. Wait ${Math.ceil(waitMs / 1000)} s and try again.`)
       .catch(() => {});
     await member.voice.disconnect('Ryze cooldown').catch(() => {});
     return;
@@ -93,7 +93,7 @@ export async function createFor(member: GuildMember, opts: { fromPanel?: boolean
       bitrate: voice.bitrateKbps ? Math.min(voice.bitrateKbps * 1000, maxBitrate) : undefined,
       // Inherit the category permissions, then add ours on top.
       permissionOverwrites: [...(parent?.permissionOverwrites.cache.values() ?? []), ...overwrites],
-      reason: `Ryze: canal temporal de ${member.user.tag}`,
+      reason: `Ryze: temporary channel for ${member.user.tag}`,
     });
     tempChannels.add(channel.id, guild.id, member.id);
     lastCreated.set(key, now);
@@ -121,7 +121,7 @@ async function deleteIfEmpty(channel: VoiceBasedChannel): Promise<void> {
   if (!temp || channel.members.size > 0) return;
   tempChannels.remove(channel.id);
   try {
-    await channel.delete('Ryze: canal temporal vacío');
+    await channel.delete('Ryze: empty temporary channel');
     events.log(channel.guild.id, 'voice.deleted', {
       targetId: channel.id,
       data: { name: channel.name, ownerId: temp.ownerId, lifetimeMs: Date.now() - temp.createdAt },

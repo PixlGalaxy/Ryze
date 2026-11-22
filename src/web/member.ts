@@ -58,7 +58,7 @@ async function channelState(channel: VoiceBasedChannel, ownerId: string) {
 
 function requireOwned(member: GuildMember): VoiceBasedChannel {
   const channel = ownedChannel(member);
-  if (!channel) throw new HttpError(404, 'No tienes un canal temporal ahora mismo.');
+  if (!channel) throw new HttpError(404, 'You don\'t have a temporary channel right now.');
   return channel;
 }
 
@@ -166,11 +166,11 @@ export function createMemberRouter(): Router {
     '/create',
     route(async (req, res) => {
       const { member, guild } = req.auth;
-      if (!member.voice.channel) throw new HttpError(400, 'Conéctate primero a cualquier canal de voz del servidor.');
-      if (!getSettings(guild.id).voice.lobbyChannelId) throw new HttpError(400, 'Los admins todavía no configuraron Ryze en este servidor.');
+      if (!member.voice.channel) throw new HttpError(400, 'Join any voice channel in the server first.');
+      if (!getSettings(guild.id).voice.lobbyChannelId) throw new HttpError(400, 'The admins haven\'t set up Ryze in this server yet.');
       await createFor(member, { fromPanel: true });
       const channel = ownedChannel(member);
-      if (!channel) throw new HttpError(429, 'No se pudo crear el canal (¿cooldown?). Inténtalo en unos segundos.');
+      if (!channel) throw new HttpError(429, 'Could not create the channel (cooldown?). Try again in a few seconds.');
       res.json({ channel: await channelState(channel, member.id) });
     }),
   );
@@ -185,7 +185,7 @@ export function createMemberRouter(): Router {
     '/preferences',
     route(async (req, res) => {
       const { guild, member } = req.auth;
-      if (!canCustomize(member)) throw new HttpError(403, 'Los administradores desactivaron la personalización.');
+      if (!canCustomize(member)) throw new HttpError(403, 'The admins turned off customization.');
       const prefs = prefsBody.parse(req.body);
       userSettings.set(guild.id, member.id, prefs);
       res.json(prefs);

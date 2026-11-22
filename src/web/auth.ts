@@ -34,7 +34,7 @@ export async function exchangeCode(code: string): Promise<string> {
     }),
   });
   if (!response.ok) {
-    throw new HttpError(401, `Discord rechazó el código de inicio de sesión (${response.status})`);
+    throw new HttpError(401, `Discord rejected the sign-in code (${response.status})`);
   }
   const data = (await response.json()) as { access_token: string };
   return data.access_token;
@@ -44,7 +44,7 @@ export async function fetchDiscordUser(accessToken: string): Promise<DiscordUser
   const response = await fetch('https://discord.com/api/v10/users/@me', {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!response.ok) throw new HttpError(401, 'Token de Discord inválido');
+  if (!response.ok) throw new HttpError(401, 'Invalid Discord token');
   return (await response.json()) as DiscordUser;
 }
 
@@ -74,12 +74,12 @@ export async function requireSession(req: Request, _res: Response, next: NextFun
     const session = token ? sessions.get(token) : undefined;
     if (!session || session.expiresAt < Date.now()) {
       if (token) sessions.delete(token);
-      throw new HttpError(401, 'La sesión expiró, vuelve a abrir la Activity');
+      throw new HttpError(401, 'Your session expired, reopen the Activity');
     }
     const guild = client.guilds.cache.get(session.guildId);
-    if (!guild) throw new HttpError(404, 'Ryze ya no está en este servidor');
+    if (!guild) throw new HttpError(404, 'Ryze is no longer in this server');
     const member = await guild.members.fetch(session.userId).catch(() => null);
-    if (!member) throw new HttpError(403, 'No eres miembro de este servidor');
+    if (!member) throw new HttpError(403, 'You are not a member of this server');
     (req as AuthedRequest).auth = { guild, member, access: getAccess(member) };
     next();
   } catch (error) {
@@ -89,7 +89,7 @@ export async function requireSession(req: Request, _res: Response, next: NextFun
 
 /** Only the server owner and Ryze managers. Use after requireSession. */
 export function requireAdmin(req: Request, _res: Response, next: NextFunction): void {
-  if (!(req as AuthedRequest).auth?.access) return next(new HttpError(403, 'Solo el dueño del servidor o los managers de Ryze'));
+  if (!(req as AuthedRequest).auth?.access) return next(new HttpError(403, 'Only the server owner or Ryze managers'));
   next();
 }
 
@@ -109,7 +109,7 @@ export function rateLimit(max: number, windowMs: number) {
       hits.set(key, { count: 1, resetAt: now + windowMs });
       return next();
     }
-    if (++entry.count > max) return next(new HttpError(429, 'Demasiadas solicitudes, espera un momento'));
+    if (++entry.count > max) return next(new HttpError(429, 'Too many requests, wait a moment'));
     next();
   };
 }

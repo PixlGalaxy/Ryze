@@ -12,11 +12,11 @@ import { VoiceSettings } from './VoiceSettings';
 export type AdminTab = 'overview' | 'voice' | 'antispam' | 'permissions' | 'activity';
 
 const TABS: { id: AdminTab; label: string; icon: LucideIcon }[] = [
-  { id: 'overview', label: 'Resumen', icon: LayoutDashboard },
-  { id: 'voice', label: 'Canales de voz', icon: Volume2 },
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'voice', label: 'Voice channels', icon: Volume2 },
   { id: 'antispam', label: 'Anti-spam', icon: ShieldAlert },
-  { id: 'permissions', label: 'Permisos', icon: Users },
-  { id: 'activity', label: 'Actividad', icon: History },
+  { id: 'permissions', label: 'Permissions', icon: Users },
+  { id: 'activity', label: 'Activity', icon: History },
 ];
 
 export interface AdminProps {
@@ -31,7 +31,7 @@ export function AdminPanel({ access }: { access: Exclude<Access, null> }) {
 
   if (!guild.data) {
     return guild.error ? (
-      <CenterScreen icon={TriangleAlert} title="No se pudo cargar la configuración">
+      <CenterScreen icon={TriangleAlert} title="Could not load the settings">
         {guild.error}
       </CenterScreen>
     ) : (

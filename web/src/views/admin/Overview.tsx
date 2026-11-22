@@ -15,27 +15,27 @@ export function Overview({ data, go }: AdminProps) {
   const lobby = data.channels.find((c) => c.id === voice.lobbyChannelId);
 
   const tiles: [string, number | undefined, AdminTab][] = [
-    ['Canales activos', stats.data?.activeChannels, 'voice'],
-    ['Spam bloqueado (24 h)', stats.data?.spam24h, 'activity'],
-    ['Canales creados (24 h)', stats.data?.created24h, 'activity'],
+    ['Active channels', stats.data?.activeChannels, 'voice'],
+    ['Spam blocked (24 h)', stats.data?.spam24h, 'activity'],
+    ['Channels created (24 h)', stats.data?.created24h, 'activity'],
   ];
 
   const checks = [
-    { ok: !!lobby, icon: Volume2, title: 'Canal lobby', text: lobby ? `🔊 ${lobby.name}` : 'Elige un canal o usa /voice setup', tab: 'voice' as const },
+    { ok: !!lobby, icon: Volume2, title: 'Lobby channel', text: lobby ? `🔊 ${lobby.name}` : 'Pick a channel or use /voice setup', tab: 'voice' as const },
     {
       ok: antiSpam.enabled,
       icon: ShieldAlert,
       title: 'Anti-spam',
-      text: antiSpam.enabled ? `Timeout de ${antiSpam.timeoutMinutes} min · ${antiSpam.blockedPatterns.length} palabras bloqueadas` : 'Desactivado',
+      text: antiSpam.enabled ? `${antiSpam.timeoutMinutes} min timeout · ${antiSpam.blockedPatterns.length} blocked words` : 'Disabled',
       tab: 'antispam' as const,
     },
-    { ok: true, icon: Users, title: 'Managers', text: `${managers.userIds.length} usuario(s) · ${managers.roleIds.length} rol(es)`, tab: 'permissions' as const },
+    { ok: true, icon: Users, title: 'Managers', text: `${managers.userIds.length} user(s) · ${managers.roleIds.length} role(s)`, tab: 'permissions' as const },
   ];
 
   return (
     <>
       {data.warnings.length > 0 && (
-        <Card title="Faltan permisos al bot" icon={TriangleAlert} className="border-warn" description="Sin estos permisos algunas funciones no van a funcionar. Dáselos al rol de Ryze en Ajustes del servidor → Roles.">
+        <Card title="The bot is missing permissions" icon={TriangleAlert} className="border-warn" description="Some features won't work without these permissions. Grant them to the Ryze role in Server Settings → Roles.">
           <ul className="list-disc pl-5">
             {data.warnings.map((w) => (
               <li key={w}>{w}</li>
@@ -51,7 +51,7 @@ export function Overview({ data, go }: AdminProps) {
           </button>
         ))}
       </div>
-      <Card title="Estado">
+      <Card title="Status">
         <div className="mt-2 flex flex-col gap-1">
           {checks.map((c) => (
             <button key={c.title} type="button" onClick={() => go(c.tab)} className="flex cursor-pointer items-center gap-3 rounded-lg bg-surface-2 px-3 py-2.5 text-left transition hover:bg-surface-3">

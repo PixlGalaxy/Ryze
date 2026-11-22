@@ -125,16 +125,16 @@ async function punish(
 
     const reasonText =
       detail.reason === 'blocked_pattern'
-        ? `Enlace/texto bloqueado ("${detail.pattern}")`
-        : `Mismo mensaje en ${detail.channelCount} canales en ${settings.windowSeconds}s`;
+        ? `Blocked link/text ("${detail.pattern}")`
+        : `Same message in ${detail.channelCount} channels within ${settings.windowSeconds}s`;
 
     // Timeout.
     const me = guild.members.me;
     let timeoutError: string | null = null;
     if (!me?.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-      timeoutError = 'Al bot le falta el permiso "Aislar temporalmente a miembros" (Moderate Members).';
+      timeoutError = 'The bot is missing the "Timeout Members" (Moderate Members) permission.';
     } else if (!member.moderatable) {
-      timeoutError = 'El rol del usuario está por encima del rol del bot (o es administrador).';
+      timeoutError = 'The user\'s role is above the bot\'s role (or they are an administrator).';
     } else {
       try {
         await member.timeout(settings.timeoutMinutes * 60_000, `Ryze anti-spam: ${reasonText}`);
@@ -166,24 +166,24 @@ async function punish(
     if (!alertChannel) return;
     const embed = new EmbedBuilder()
       .setColor(timeoutError ? 0xf0b232 : 0xed4245)
-      .setTitle(timeoutError ? '⚠️ Spam detectado (sin timeout)' : '🔇 Timeout por spam')
+      .setTitle(timeoutError ? '⚠️ Spam detected (no timeout)' : '🔇 Spam timeout')
       .setDescription(
         timeoutError
-          ? `Se detectó spam de ${member} pero **no se pudo aplicar el timeout**: ${timeoutError}`
-          : `Se aplicó timeout de **${settings.timeoutMinutes} min** a ${member} por spam.`,
+          ? `Spam detected from ${member} but **the timeout could not be applied**: ${timeoutError}`
+          : `${member} got a **${settings.timeoutMinutes} min** timeout for spam.`,
       )
       .addFields(
-        { name: 'Motivo', value: reasonText, inline: true },
-        { name: 'Mensajes borrados', value: String(deleted), inline: true },
-        { name: 'Canales', value: channelIds.map((id) => `<#${id}>`).join(' ').slice(0, 1024) || '—' },
+        { name: 'Reason', value: reasonText, inline: true },
+        { name: 'Messages deleted', value: String(deleted), inline: true },
+        { name: 'Channels', value: channelIds.map((id) => `<#${id}>`).join(' ').slice(0, 1024) || '—' },
       )
-      .setFooter({ text: `Evento #${event.id} · Revisa los detalles en la Activity de Ryze` })
+      .setFooter({ text: `Event #${event.id} · See the details in the Ryze Activity` })
       .setTimestamp();
 
     await alertChannel
       .send({
         content: settings.pingAdmins
-          ? `${adminMentions(guild)} revisen la actividad desde **Activities → Ryze**.`
+          ? `${adminMentions(guild)} please review it from **Activities → Ryze**.`
           : undefined,
         embeds: [embed],
         components: [openActivityRow()],
