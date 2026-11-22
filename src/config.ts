@@ -38,4 +38,12 @@ export const env = {
   devGuildId: process.env.DEV_GUILD_ID?.trim() || undefined,
   /** Bot presence text. */
   presenceText: optional('PRESENCE_TEXT', '/help · /voice'),
+  /**
+   * Optional HTTPS for local testing with Discord's "Application URL Override"
+   * (desktop only loads it over HTTPS). Leave empty behind a reverse proxy or tunnel.
+   */
+  httpsCert:
+    process.env.HTTPS_CERT_FILE?.trim() && process.env.HTTPS_KEY_FILE?.trim()
+      ? { cert: process.env.HTTPS_CERT_FILE.trim(), key: process.env.HTTPS_KEY_FILE.trim() }
+      : undefined,
 };

@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { createServer as createHttpServer } from 'node:http';
+import { createServer as createHttpsServer } from 'node:https';
 import { env } from './config.js';
 import { closeDatabase, events, importLegacyDatabase } from './db.js';
 import { client, startBot } from './bot/client.js';
@@ -9,8 +12,13 @@ const pruned = events.prune(env.eventRetentionDays);
 if (pruned) console.log(`[db] Pruned ${pruned} old activity events`);
 setInterval(() => events.prune(env.eventRetentionDays), 86_400_000).unref();
 
-const server = createServer().listen(env.port, () => {
-  console.log(`[web] Activity server listening on :${env.port}`);
+const app = createServer();
+// Optional local HTTPS: Discord desktop only loads an "Application URL Override" over HTTPS.
+const server = env.httpsCert
+  ? createHttpsServer({ cert: readFileSync(env.httpsCert.cert), key: readFileSync(env.httpsCert.key) }, app)
+  : createHttpServer(app);
+server.listen(env.port, () => {
+  console.log(`[web] Activity server listening on ${env.httpsCert ? 'https' : 'http'}://localhost:${env.port}`);
 });
 
 await startBot();

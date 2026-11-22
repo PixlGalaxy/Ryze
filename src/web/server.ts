@@ -60,12 +60,12 @@ function botPermissionWarnings(guild: Guild): string[] {
   const me = guild.members.me;
   if (!me) return [];
   const needed: [bigint, string][] = [
-    [PermissionFlagsBits.ManageChannels, 'Gestionar canales'],
-    [PermissionFlagsBits.ManageRoles, 'Gestionar roles (permisos de los canales)'],
-    [PermissionFlagsBits.MoveMembers, 'Mover miembros'],
-    [PermissionFlagsBits.ModerateMembers, 'Aislar temporalmente a miembros (timeout)'],
-    [PermissionFlagsBits.ManageMessages, 'Gestionar mensajes (borrar spam)'],
-    [PermissionFlagsBits.SendMessages, 'Enviar mensajes'],
+    [PermissionFlagsBits.ManageChannels, 'Manage Channels'],
+    [PermissionFlagsBits.ManageRoles, 'Manage Roles (channel permissions)'],
+    [PermissionFlagsBits.MoveMembers, 'Move Members'],
+    [PermissionFlagsBits.ModerateMembers, 'Timeout Members'],
+    [PermissionFlagsBits.ManageMessages, 'Manage Messages (delete spam)'],
+    [PermissionFlagsBits.SendMessages, 'Send Messages'],
   ];
   return needed.filter(([flag]) => !me.permissions.has(flag)).map(([, label]) => label);
 }
@@ -93,6 +93,16 @@ export function createServer() {
   const app = express();
   app.set('trust proxy', true);
   app.disable('x-powered-by');
+
+  // LOG_REQUESTS=1 prints every request, handy to see if Discord reaches the panel.
+  if (process.env.LOG_REQUESTS === '1') {
+    app.use((req, res, next) => {
+      const start = Date.now();
+      res.on('finish', () => console.log(`[http] ${req.method} ${req.originalUrl} ${res.statusCode} ${Date.now() - start}ms`));
+      next();
+    });
+  }
+
   app.use(express.json({ limit: '100kb' }));
 
   // --------------------------------------------------------------- public
@@ -162,7 +172,7 @@ export function createServer() {
   function assertChannel(guild: Guild, id: string | null, kind: 'voice' | 'category' | 'text', label: string) {
     if (!id) return;
     const channel = guild.channels.cache.get(id);
-    if (!channel || channelInfo(channel).type !== kind) throw new HttpError(400, `${label}: canal inválido`);
+    if (!channel || channelInfo(channel).type !== kind) throw new HttpError(400, `${label}: invalid channel`);
   }
 
   app.put(
@@ -170,8 +180,8 @@ export function createServer() {
     authed((req, res) => {
       const { guild, member } = req.auth;
       const voice = voiceSettingsSchema.parse(req.body);
-      assertChannel(guild, voice.lobbyChannelId, 'voice', 'Canal lobby');
-      assertChannel(guild, voice.categoryId, 'category', 'Categoría');
+      assertChannel(guild, voice.lobbyChannelId, 'voice', 'Lobby channel');
+      assertChannel(guild, voice.categoryId, 'category', 'Category');
       const before = getSettings(guild.id).voice;
       const saved = updateSettings(guild.id, (s) => ({ ...s, voice }));
       const changed = changedKeys(before, voice);
@@ -185,7 +195,7 @@ export function createServer() {
     authed((req, res) => {
       const { guild, member } = req.auth;
       const antiSpam = antiSpamSettingsSchema.parse(req.body);
-      assertChannel(guild, antiSpam.alertChannelId, 'text', 'Canal de alertas');
+      assertChannel(guild, antiSpam.alertChannelId, 'text', 'Alert channel');
       antiSpam.blockedPatterns = [...new Set(antiSpam.blockedPatterns.map((p) => p.toLowerCase()))];
       const before = getSettings(guild.id).antiSpam;
       const saved = updateSettings(guild.id, (s) => ({ ...s, antiSpam }));
@@ -199,7 +209,7 @@ export function createServer() {
     '/api/settings/managers',
     authed(async (req, res) => {
       const { guild, member, access } = req.auth;
-      if (access !== 'owner') throw new HttpError(403, 'Solo el dueño del servidor puede cambiar los managers');
+      if (access !== 'owner') throw new HttpError(403, 'Only the server owner can change the managers');
       const managers = managersSchema.parse(req.body);
       managers.userIds = [...new Set(managers.userIds)].filter((id) => id !== guild.ownerId);
       managers.roleIds = [...new Set(managers.roleIds)].filter((id) => guild.roles.cache.has(id) && id !== guild.id);
@@ -271,8 +281,8 @@ export function createServer() {
       const { guild, member } = req.auth;
       const userId = String(req.params.userId);
       const target = await guild.members.fetch(userId).catch(() => null);
-      if (!target) throw new HttpError(404, 'El usuario ya no está en el servidor');
-      await target.timeout(null, `Ryze: timeout quitado por ${member.user.tag}`);
+      if (!target) throw new HttpError(404, 'That user is no longer in the server');
+      await target.timeout(null, `Ryze: timeout removed by ${member.user.tag}`);
       events.log(guild.id, 'spam.untimeout', { actorId: member.id, targetId: userId });
       res.json({ ok: true });
     }),
@@ -287,7 +297,7 @@ export function createServer() {
         const channel = found?.isVoiceBased() ? found : undefined;
         return {
           ...t,
-          name: channel?.name ?? '(borrado)',
+          name: channel?.name ?? '(deleted)',
           members: channel?.members.size ?? 0,
           limit: channel?.userLimit ?? 0,
           locked: channel?.permissionOverwrites.cache.get(guild.id)?.deny.has(PermissionFlagsBits.Connect) ?? false,
@@ -303,10 +313,10 @@ export function createServer() {
       const { guild, member } = req.auth;
       const channelId = String(req.params.channelId);
       const temp = tempChannels.get(channelId);
-      if (!temp || temp.guildId !== guild.id) throw new HttpError(404, 'Canal no encontrado');
+      if (!temp || temp.guildId !== guild.id) throw new HttpError(404, 'Channel not found');
       tempChannels.remove(channelId);
       const channel = guild.channels.cache.get(channelId);
-      await channel?.delete(`Ryze: borrado desde el panel por ${member.user.tag}`).catch(() => {});
+      await channel?.delete(`Ryze: deleted from the panel by ${member.user.tag}`).catch(() => {});
       events.log(guild.id, 'voice.deleted', {
         actorId: member.id,
         targetId: channelId,
@@ -316,7 +326,7 @@ export function createServer() {
     }),
   );
 
-  app.use('/api', (_req, _res, next) => next(new HttpError(404, 'Ruta no encontrada')));
+  app.use('/api', (_req, _res, next) => next(new HttpError(404, 'Route not found')));
 
   // ------------------------------------------------------- Discord CDN proxy
 
@@ -340,8 +350,14 @@ export function createServer() {
 
   const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
   if (existsSync(publicDir)) {
-    app.use(express.static(publicDir, { index: 'index.html', maxAge: '1h' }));
-    app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(join(publicDir, 'index.html')));
+    // Hashed bundles never change; index.html must always be fresh or a rebuild
+    // leaves Discord pointing at bundles that no longer exist (white screen).
+    app.use('/assets', express.static(join(publicDir, 'assets'), { immutable: true, maxAge: '1y', fallthrough: false }));
+    app.use(express.static(publicDir, { index: 'index.html', cacheControl: false }));
+    app.get(/^\/(?!api\/).*/, (_req, res) => {
+      res.set('Cache-Control', 'no-cache');
+      res.sendFile(join(publicDir, 'index.html'));
+    });
   }
 
   // --------------------------------------------------------------- errors
@@ -352,7 +368,7 @@ export function createServer() {
     }
     if (error instanceof HttpError) return void res.status(error.status).json({ error: error.message });
     console.error('[web]', error);
-    res.status(500).json({ error: 'Error interno' });
+    res.status(500).json({ error: 'Internal error' });
   });
 
   return app;
