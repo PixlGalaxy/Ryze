@@ -42,7 +42,7 @@ En <https://discord.com/developers/applications> → tu aplicación:
 2. **General Information** → copia el *Application ID* (`DISCORD_CLIENT_ID`).
 3. **OAuth2**
    - Copia el *Client Secret* (`DISCORD_CLIENT_SECRET`).
-   - En *Redirects* agrega `https://127.0.0.1` (Discord lo exige aunque la Activity no lo usa).
+   - En *Redirects* agrega **exactamente una** URL, `https://127.0.0.1`, y pulsa **Save Changes**. Es obligatoria: sin ella el login de la Activity falla con `Missing "redirect_uri" in request`. No es lo mismo que el URL Mapping.
 4. **Activities → Settings** → activa **Enable Activities**. Elige que se pueda lanzar en servidores.
 5. **Activities → URL Mappings** → agrega:
 
@@ -155,6 +155,30 @@ npm run build:web        # compila el panel una vez (o usa `npm run dev:web` con
 npm run dev              # bot + API con recarga automática
 ```
 
+O sin Docker en modo producción: `npm run build` y `npm start` (ambos leen el `.env`).
+
+### Ver el panel en local (sin túnel)
+
+Discord de escritorio puede cargar la Activity desde tu PC con el **Application URL Override**, pero **solo por HTTPS**. Con `http://localhost` se queda en blanco.
+
+1. Crea un certificado de confianza para `localhost`:
+   ```powershell
+   winget install FiloSottile.mkcert   # luego abre una terminal nueva
+   mkcert -install
+   mkdir certs
+   mkcert -cert-file certs/localhost.pem -key-file certs/localhost-key.pem localhost 127.0.0.1
+   ```
+2. En `.env`:
+   ```env
+   HTTPS_CERT_FILE=./certs/localhost.pem
+   HTTPS_KEY_FILE=./certs/localhost-key.pem
+   ```
+3. `npm start` → `listening on https://localhost:3000`.
+4. Discord → Ajustes → Avanzado → **Modo desarrollador** y **Application URL Override** = `https://localhost:3000`. Cierra Discord por completo y ábrelo.
+5. Abre la Activity (`/panel` o 🚀). Para depurar, `LOG_REQUESTS=1` muestra cada petición en la consola.
+
+Quita el override cuando uses el túnel o tu dominio: si está puesto, Discord siempre usa el override.
+
 | Script | Descripción |
 | --- | --- |
 | `npm run dev` | Bot + servidor web con recarga (tsx) |
@@ -203,3 +227,5 @@ docker/entrypoint.sh  ajusta permisos de /appdata y baja a usuario sin privilegi
 | `DEV_GUILD_ID` | No | | Registra los comandos solo en ese servidor |
 | `PRESENCE_TEXT` | No | `/help · /voice` | Estado del bot |
 | `EVENT_RETENTION_DAYS` | No | `90` | Días que se guarda el registro de actividad |
+| `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE` | No | | Sirve el panel por HTTPS (solo para probar en local con el URL override) |
+| `LOG_REQUESTS` | No | | `1` = muestra cada petición HTTP en la consola |
